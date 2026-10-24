@@ -1,0 +1,1618 @@
+<meta charset="utf-8">
+<title>V4V Music Manager Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: toolbar over sidebar - content - inspector; medium = overlay sidebar; compact (<600px) = nav bar + tab bar.
+   Tokens follow journeys/wireframes/00-foundations.md sec.5-sec.7. "Structure" skin = neutral; "MusicIndex" skin = musicindex.org ideas. */
+:root{
+  --font-text:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --bg-window:#f4f4f6; --bg-sidebar:#ececf0; --bg-content:#ffffff; --bg-elevated:#ffffff;
+  --bg-hover:rgba(60,60,72,.06); --bg-selected:rgba(60,60,72,.11);
+  --fg-primary:#1c1c21; --fg-secondary:#5c5c66; --fg-tertiary:#8b8b95; --fg-on-accent:#ffffff;
+  --accent:#0a63d8; --accent-subtle:rgba(10,99,216,.12); --focus-ring:#0a63d8;
+  --separator:rgba(60,60,67,.16); --border-control:rgba(60,60,67,.26);
+  --state-ok:#1d7f46; --state-warn:#a95700; --state-danger:#c4271b; --state-live:#d70015; --state-info:#0a63d8;
+  --entity-release:#8b8b95; --entity-track:#8b8b95; --entity-artist:#8b8b95; --entity-playlist:#8b8b95;
+  --art-sat:0; --art-l:85%; --art-ink:#6f6f78; --shadow-art:none;
+  --material-bar:rgba(244,244,246,.86); --scrim:rgba(20,20,24,.32);
+  --radius-control:7px; --radius-row:8px; --radius-art-sm:6px; --radius-art-lg:8px; --radius-sheet:14px;
+  --t-lt:700 2.125rem/1.12 var(--font-display); --t-t1:700 1.75rem/1.15 var(--font-display);
+  --t-t2:700 1.375rem/1.2 var(--font-display); --t-t3:600 1.25rem/1.25 var(--font-text);
+  --t-hl:600 1.0625rem/1.3 var(--font-text); --t-bd:400 1.0625rem/1.35 var(--font-text);
+  --t-co:400 1rem/1.42 var(--font-text); --t-sh:400 .9375rem/1.3 var(--font-text);
+  --t-fn:400 .8125rem/1.3 var(--font-text); --t-c1:500 .75rem/1.25 var(--font-text); --t-c2:500 .6875rem/1.2 var(--font-text);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg-window:#1a1a1d; --bg-sidebar:#222226; --bg-content:#141416; --bg-elevated:#26262b;
+  --bg-hover:rgba(255,255,255,.06); --bg-selected:rgba(255,255,255,.11);
+  --fg-primary:#f2f2f5; --fg-secondary:#a6a6b0; --fg-tertiary:#777780; --fg-on-accent:#ffffff;
+  --accent:#4c93ff; --accent-subtle:rgba(76,147,255,.18); --focus-ring:#4c93ff;
+  --separator:rgba(255,255,255,.10); --border-control:rgba(255,255,255,.2);
+  --state-ok:#3fcf7d; --state-warn:#ffb340; --state-danger:#ff6259; --state-live:#ff453a; --state-info:#4c93ff;
+  --entity-release:#8b8b95; --entity-track:#8b8b95; --entity-artist:#8b8b95; --entity-playlist:#8b8b95;
+  --art-l:24%; --art-ink:#9d9da6; --material-bar:rgba(26,26,29,.86); --scrim:rgba(0,0,0,.55); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg-window:#1a1a1d; --bg-sidebar:#222226; --bg-content:#141416; --bg-elevated:#26262b;
+  --bg-hover:rgba(255,255,255,.06); --bg-selected:rgba(255,255,255,.11);
+  --fg-primary:#f2f2f5; --fg-secondary:#a6a6b0; --fg-tertiary:#777780; --fg-on-accent:#ffffff;
+  --accent:#4c93ff; --accent-subtle:rgba(76,147,255,.18); --focus-ring:#4c93ff;
+  --separator:rgba(255,255,255,.10); --border-control:rgba(255,255,255,.2);
+  --state-ok:#3fcf7d; --state-warn:#ffb340; --state-danger:#ff6259; --state-live:#ff453a; --state-info:#4c93ff;
+  --entity-release:#8b8b95; --entity-track:#8b8b95; --entity-artist:#8b8b95; --entity-playlist:#8b8b95;
+  --art-l:24%; --art-ink:#9d9da6; --material-bar:rgba(26,26,29,.86); --scrim:rgba(0,0,0,.55); color-scheme:dark}
+/* MusicIndex skin: one blue accent, entity hues, coloured art with shadow, pills, Figtree off Apple devices */
+:root[data-skin="mi"]{
+  --font-text:-apple-system,BlinkMacSystemFont,"SF Pro Text","Figtree",system-ui,sans-serif;
+  --font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Figtree",system-ui,sans-serif;
+  --bg-window:#ffffff; --bg-sidebar:#f5f5f7; --bg-content:#ffffff; --bg-elevated:#ffffff;
+  --accent:#0a5bd6; --accent-subtle:rgba(10,91,214,.12); --focus-ring:#005bd3;
+  --entity-release:#8a5e21; --entity-track:#008e9c; --entity-artist:#723763; --entity-playlist:#006238;
+  --art-sat:40; --art-l:44%; --art-ink:rgba(255,255,255,.9); --shadow-art:0 12px 28px rgba(0,0,0,.18);
+  --material-bar:rgba(255,255,255,.72); --radius-control:999px; --radius-art-sm:10px; --radius-art-lg:12px;
+  --t-lt:800 2.125rem/1.1 var(--font-display); --t-t1:800 1.75rem/1.12 var(--font-display);
+}
+@media (prefers-color-scheme:dark){:root[data-skin="mi"]:not([data-theme="light"]){
+  --bg-window:#0b0b0d; --bg-sidebar:#141417; --bg-content:#0b0b0d; --bg-elevated:#1c1c1f;
+  --accent:#2d7bff; --accent-subtle:rgba(45,123,255,.2); --focus-ring:#2d7bff;
+  --entity-release:#c4965b; --entity-track:#00a3b3; --entity-artist:#fab5e5; --entity-playlist:#8edfad;
+  --art-sat:40; --art-l:38%; --art-ink:rgba(255,255,255,.9); --shadow-art:0 12px 28px rgba(0,0,0,.5);
+  --material-bar:rgba(11,11,13,.62)}}
+:root[data-skin="mi"][data-theme="dark"]{
+  --bg-window:#0b0b0d; --bg-sidebar:#141417; --bg-content:#0b0b0d; --bg-elevated:#1c1c1f;
+  --accent:#2d7bff; --accent-subtle:rgba(45,123,255,.2); --focus-ring:#2d7bff;
+  --entity-release:#c4965b; --entity-track:#00a3b3; --entity-artist:#fab5e5; --entity-playlist:#8edfad;
+  --art-sat:40; --art-l:38%; --art-ink:rgba(255,255,255,.9); --shadow-art:0 12px 28px rgba(0,0,0,.5);
+  --material-bar:rgba(11,11,13,.62)}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+html{font-size:calc(16px * var(--ts,1))}
+@media (min-width:1000px){html{font-size:calc(14px * var(--ts,1))}}
+body{background:var(--bg-window);color:var(--fg-primary);font:var(--t-bd);overflow:hidden;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+.lt{font:var(--t-lt);letter-spacing:-.02em;text-wrap:balance}.t1{font:var(--t-t1);letter-spacing:-.015em;text-wrap:balance}
+.t2{font:var(--t-t2);letter-spacing:-.01em}.t3{font:var(--t-t3)}.hl{font:var(--t-hl)}.co{font:var(--t-co)}
+.sh{font:var(--t-sh)}.fn{font:var(--t-fn)}.c1{font:var(--t-c1)}.c2{font:var(--t-c2)}
+.muted{color:var(--fg-secondary)}.faint{color:var(--fg-tertiary)}.num{font-variant-numeric:tabular-nums}
+.ic{width:1.15em;height:1.15em;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em}
+
+/* shell */
+#app{display:grid;height:100%;grid-template-columns:var(--sidebar-w,248px) minmax(0,1fr) auto;grid-template-rows:52px minmax(0,1fr) auto auto;
+  grid-template-areas:"tool tool tool" "side main insp" "acc acc acc" "tabs tabs tabs"}
+.toolbar{grid-area:tool;display:flex;align-items:center;gap:6px;padding:0 16px;background:var(--material-bar);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--separator);min-width:0;z-index:30}
+.tb-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:6px}
+.tb-search{position:relative;display:flex;align-items:center;gap:6px;width:min(340px,38vw);height:32px;padding:0 10px;border-radius:9px;background:var(--bg-selected);color:var(--fg-secondary)}
+.tb-search input{flex:1;min-width:0;border:0;background:transparent;outline:none;font:var(--t-sh);color:var(--fg-primary)}
+.tb-search:focus-within{outline:2px solid var(--focus-ring)}
+kbd{font:var(--t-c1);color:var(--fg-tertiary);border:1px solid var(--separator);border-radius:5px;padding:1px 5px;white-space:nowrap}
+.navbar{grid-area:nav;display:none;align-items:center;gap:6px;min-height:44px;padding:4px max(12px,env(safe-area-inset-left,0px));background:var(--material-bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid var(--separator)}
+.sidebar{grid-area:side;background:var(--bg-sidebar);border-right:1px solid var(--separator);overflow:auto;padding:8px 8px 24px;display:flex;flex-direction:column}
+.main{grid-area:main;overflow:auto;background:var(--bg-content);position:relative;outline:none}
+.inspector{grid-area:insp;width:320px;border-left:1px solid var(--separator);background:var(--bg-sidebar);overflow:auto;padding:20px}
+.accessory{grid-area:acc;display:flex;align-items:center;gap:12px;padding:8px 16px;border-top:1px solid var(--separator);background:var(--material-bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);min-width:0}
+.tabbar{grid-area:tabs;display:none;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--separator);background:var(--material-bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding-bottom:env(safe-area-inset-bottom,0px)}
+#sidescrim{position:fixed;inset:52px 0 0 0;background:var(--scrim);z-index:39}
+.compact-only{display:none!important}
+@media (max-width:999px){
+  #app{grid-template-columns:minmax(0,1fr);grid-template-areas:"tool" "main" "acc" "tabs"}
+  .sidebar{position:fixed;top:52px;bottom:0;left:0;width:280px;z-index:40;transform:translateX(-102%);transition:transform .2s ease;box-shadow:0 0 40px rgba(0,0,0,.25)}
+  .sidebar.open{transform:none}
+  .inspector{display:none!important}
+  .wide-only{display:none!important}
+}
+@media (max-width:599px){
+  #app{grid-template-rows:auto minmax(0,1fr) auto auto;grid-template-areas:"nav" "main" "acc" "tabs"}
+  .toolbar{display:none}.navbar{display:flex}.tabbar{display:grid}.sidebar{display:none}
+  .compact-only{display:flex!important}.not-compact{display:none!important}
+}
+.iconbtn{display:inline-grid;place-items:center;width:32px;height:32px;border:0;border-radius:8px;background:transparent;color:var(--fg-secondary);cursor:pointer;position:relative;flex:none}
+.iconbtn:hover{background:var(--bg-hover);color:var(--fg-primary)}
+.iconbtn:disabled{opacity:.35;cursor:default;background:transparent}
+.iconbtn[aria-pressed="true"]{color:var(--accent)}
+@media (pointer:coarse){.iconbtn{width:44px;height:44px}}
+.iconbtn .pip{position:absolute;top:2px;right:2px;min-width:16px;height:16px;border-radius:8px;padding:0 4px;background:var(--accent);color:var(--fg-on-accent);font:var(--t-c2);display:grid;place-items:center}
+
+/* sidebar */
+.side-h{font:var(--t-sh);font-weight:600;color:var(--fg-secondary);padding:14px 10px 4px}
+.side-i{display:flex;align-items:center;gap:10px;width:100%;min-height:32px;padding:5px 10px;border:0;border-radius:7px;background:transparent;font:var(--t-bd);text-align:left;cursor:pointer;color:var(--fg-primary)}
+.side-i:hover{background:var(--bg-hover)}
+.side-i[aria-current="page"]{background:var(--bg-selected);font-weight:600}
+.side-i .ic{color:var(--accent)}
+.side-i .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.side-i.drop-target{outline:2px solid var(--accent);background:var(--accent-subtle)}
+.side-sep{border-top:1px solid var(--separator);margin:10px 8px}
+.side-foot{margin-top:auto;padding:16px 10px 0;font:var(--t-fn);color:var(--fg-tertiary)}
+.side-new{display:flex;flex-direction:column;gap:6px;padding:6px 10px}
+.side-new input[type=text]{width:100%;padding:6px 8px;border:1px solid var(--focus-ring);border-radius:6px;background:var(--bg-content)}
+.side-new label{font:var(--t-fn);color:var(--fg-secondary);display:flex;gap:6px;align-items:center}
+.count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:10px;font:var(--t-c1);background:var(--bg-selected);color:var(--fg-secondary)}
+.count.hot{background:var(--accent);color:var(--fg-on-accent)}
+
+/* page */
+.page{max-width:1180px;margin:0 auto;padding:24px clamp(16px,3vw,32px) 120px;display:flex;flex-direction:column;gap:28px}
+.page-h{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.page-h .sub{margin-top:4px}
+.sec{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sec-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.link{border:0;background:none;color:var(--accent);font:var(--t-hl);cursor:pointer;padding:0}
+.link:hover{text-decoration:underline}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:24px 20px}
+@media (max-width:599px){.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 14px}}
+.shelf{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,170px);gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 12px}
+.shelf>*{scroll-snap-align:start}
+.chips{gap:6px;flex-wrap:wrap}
+
+/* art */
+.art{position:relative;aspect-ratio:1;width:100%;max-width:100%;border-radius:var(--radius-art-sm);background:hsl(var(--h,220) calc(var(--art-sat) * 1%) var(--art-l));color:var(--art-ink);display:grid;place-items:center;box-shadow:var(--shadow-art);overflow:hidden}
+.art .mono{font:700 1.35rem/1 var(--font-display);letter-spacing:.05em}
+.art.sm{width:44px;height:44px;box-shadow:none;flex:none}.art.sm .mono{font-size:.8rem}
+.art.xs{width:32px;height:32px;box-shadow:none;flex:none;border-radius:5px}.art.xs .mono{font-size:.65rem}
+.art.hdr{width:220px;border-radius:var(--radius-art-lg)}.art.hdr .mono{font-size:3rem}
+.art.round{border-radius:50%}
+.mosaic{display:grid;grid-template-columns:1fr 1fr;place-items:stretch;background:var(--bg-selected)}
+.mosaic i{display:block;background:hsl(var(--h) calc(var(--art-sat) * 1%) var(--art-l));border:1px solid var(--bg-content)}
+@media (max-width:599px){.art.hdr{width:min(60vw,260px)}}
+
+/* tiles */
+.tile{display:flex;flex-direction:column;gap:6px;cursor:pointer;min-width:0;border-radius:var(--radius-art-sm);position:relative}
+.tile .t-title{font:var(--t-bd);font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile .t-sub{font:var(--t-c1);color:var(--fg-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .t-act{position:absolute;right:8px;bottom:8px}
+.tile .t-check{position:absolute;left:8px;top:8px}
+.tile.sel .art{outline:3px solid var(--accent);outline-offset:2px}
+.fab{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;border:0;background:var(--bg-elevated);color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:pointer}
+.fab.done{color:var(--state-ok)}.fab.warn{color:var(--state-warn)}
+.newtag{position:absolute;left:8px;top:8px;font:var(--t-c2);font-weight:700;letter-spacing:.06em;padding:2px 6px;border-radius:4px;background:var(--bg-elevated);color:var(--fg-primary)}
+
+/* rows */
+.list{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;min-height:56px;padding:6px 8px;border-radius:var(--radius-row);cursor:default;position:relative}
+.row+.row{box-shadow:0 -1px 0 var(--separator)}
+.row:hover{background:var(--bg-hover);box-shadow:none}
+.row:hover+.row{box-shadow:none}
+.row.clickable{cursor:pointer}
+.row.sel{background:var(--accent-subtle)}
+.row.hi{background:var(--accent-subtle)}
+.row .r-main{min-width:0}
+.row .r-title{font:var(--t-bd)}
+.row .r-sub{font:var(--t-sh);color:var(--fg-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .r-trail{display:flex;align-items:center;gap:8px}
+.row .more{opacity:0}
+.row:hover .more,.row:focus-within .more,.row:focus .more{opacity:1}
+@media (hover:none){.row .more{opacity:1}}
+.row.track{grid-template-columns:2.2em minmax(0,1fr) auto auto}
+.row.track .r-num{font:var(--t-sh);color:var(--fg-tertiary);text-align:right;font-variant-numeric:tabular-nums}
+.row .dur{font:var(--t-sh);color:var(--fg-secondary);font-variant-numeric:tabular-nums;min-width:3em;text-align:right}
+.row.pl{grid-template-columns:auto 2em minmax(0,1fr) auto auto}
+.handle{cursor:grab;color:var(--fg-tertiary);display:grid;place-items:center;width:24px}
+.row.dragging{opacity:.4}
+.row.drop-before{box-shadow:inset 0 2px 0 var(--accent)}
+.indent{padding-left:40px}
+.colhead{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto auto;gap:12px;padding:0 8px 6px;font:var(--t-fn);color:var(--fg-tertiary);border-bottom:1px solid var(--separator)}
+.cbx{width:20px;height:20px;accent-color:var(--accent);margin:0}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 14px;border-radius:var(--radius-control);border:1px solid var(--border-control);background:var(--bg-elevated);font:var(--t-hl);cursor:pointer;white-space:nowrap;color:var(--fg-primary)}
+.btn:hover{background:var(--bg-hover)}
+.btn.primary{background:var(--accent);color:var(--fg-on-accent);border-color:transparent}
+.btn.primary:hover{filter:brightness(1.07);background:var(--accent)}
+.btn.live{background:var(--state-live);color:var(--fg-on-accent);border-color:transparent}
+.btn.live:hover{filter:brightness(1.07);background:var(--state-live)}
+.btn.danger{color:var(--state-danger)}
+.btn.danger.primary{background:var(--state-danger);color:var(--fg-on-accent)}
+.btn.plain{border-color:transparent;background:transparent;color:var(--accent)}
+.btn.plain:hover{background:var(--accent-subtle)}
+.btn.sm{min-height:28px;padding:0 10px;font:var(--t-sh);font-weight:600}
+.btn.sm.warn{color:var(--state-warn)}
+.btn[disabled]{opacity:.5;cursor:default}
+@media (pointer:coarse){.btn{min-height:44px}.btn.sm{min-height:36px}}
+.btn.wide{width:100%}
+.badge{display:inline-flex;align-items:center;gap:4px;font:var(--t-c1);color:var(--fg-secondary);white-space:nowrap}
+.badge.ok{color:var(--state-ok)}.badge.warn{color:var(--state-warn)}.badge.danger{color:var(--state-danger)}
+.livebadge{display:inline-flex;align-items:center;gap:6px;color:var(--state-live);font:var(--t-c1);font-weight:700;letter-spacing:.06em;white-space:nowrap}
+.livebadge::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.ring{--p:0;width:26px;height:26px;border-radius:50%;background:conic-gradient(var(--accent) calc(var(--p) * 1%),var(--bg-selected) 0);display:inline-grid;place-items:center;flex:none}
+.ring::after{content:"";width:18px;height:18px;border-radius:50%;background:var(--bg-elevated)}
+.seg{display:inline-flex;background:var(--bg-selected);border-radius:9px;padding:2px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;padding:5px 12px;border-radius:7px;font:var(--t-sh);font-weight:600;color:var(--fg-secondary);cursor:pointer;min-height:30px}
+.seg button[aria-pressed="true"]{background:var(--bg-elevated);color:var(--fg-primary);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+@media (pointer:coarse){.seg button{min-height:38px}}
+
+/* header (C4) */
+.hdr{display:grid;grid-template-columns:auto minmax(0,1fr);gap:28px;align-items:end}
+.hdr .meta{display:flex;flex-direction:column;gap:6px;min-width:0}
+.eyebrow{display:flex;align-items:center;gap:7px;font:var(--t-c1);font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-secondary)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--e,var(--entity-release));flex:none}
+.dot.hollow{background:transparent;box-shadow:inset 0 0 0 1.5px var(--e,var(--entity-artist))}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.desc{max-width:65ch;color:var(--fg-secondary);font:var(--t-co)}
+.name-link{border:0;background:none;padding:0;font:var(--t-hl);color:var(--accent);cursor:pointer;text-align:left}
+@media (max-width:599px){.hdr{grid-template-columns:1fr;justify-items:center;text-align:center}.hdr .meta{align-items:center}.actions{justify-content:center}.hdr .actions .btn.primary{width:100%}.eyebrow{justify-content:center}}
+
+/* checklist, inbox, stages */
+.chk{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--separator)}
+.chk .s{display:grid;place-items:center}
+.chk .s.ok{color:var(--state-ok)}.chk .s.warn{color:var(--state-warn)}.chk .s.danger{color:var(--state-danger)}.chk .s.wait{color:var(--fg-tertiary)}
+.chk .d{font:var(--t-sh);color:var(--fg-secondary)}
+.skel{display:block;height:.9em;border-radius:4px;background:var(--bg-selected);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.45}}
+.inbox-item{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:12px;align-items:start;padding:14px 12px;border-radius:10px;background:var(--bg-elevated);border:1px solid var(--separator);cursor:pointer}
+.inbox-item:hover{border-color:var(--border-control)}
+.inbox-item .s{padding-top:2px}
+.inbox-item .s.warn{color:var(--state-warn)}.inbox-item .s.danger{color:var(--state-danger)}.inbox-item .s.info{color:var(--state-info)}.inbox-item .s.ok{color:var(--state-ok)}
+.inbox-item .body{font:var(--t-co);color:var(--fg-secondary);margin-top:2px}
+.inbox-item .when{font:var(--t-fn);color:var(--fg-tertiary);margin-top:4px}
+.stack{display:flex;flex-direction:column;gap:10px}
+.stages{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:var(--t-sh)}
+.stage{display:flex;align-items:center;gap:7px;color:var(--fg-tertiary)}
+.stage .sd{width:11px;height:11px;border-radius:50%;border:2px solid currentColor}
+.stage.done{color:var(--fg-secondary)}.stage.done .sd{background:currentColor}
+.stage.cur{color:var(--fg-primary);font-weight:600}.stage.cur .sd{background:var(--accent);border-color:var(--accent)}
+.stage.cur.live .sd{background:var(--state-live);border-color:var(--state-live)}
+.sline{width:28px;height:1px;background:var(--separator)}
+.card{background:var(--bg-elevated);border:1px solid var(--separator);border-radius:12px;padding:18px}
+.cols{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:28px}
+@media (max-width:899px){.cols{grid-template-columns:1fr}}
+.np{display:grid;grid-template-columns:auto minmax(0,1fr);gap:22px;align-items:center}
+.np .art{width:180px}
+@media (max-width:599px){.np{grid-template-columns:1fr;justify-items:center;text-align:center}.np .art{width:min(60vw,240px)}}
+.transport{display:flex;gap:18px;align-items:flex-start;margin-top:14px;flex-wrap:wrap}
+.tbtn{display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;cursor:pointer;color:var(--fg-primary);font:var(--t-c1);min-width:44px}
+.tbtn .disc{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--bg-selected)}
+.tbtn.main .disc{background:var(--accent);color:var(--fg-on-accent);width:52px;height:52px}
+.scrub{display:flex;align-items:center;gap:10px;font:var(--t-c1);color:var(--fg-secondary);font-variant-numeric:tabular-nums;margin-top:12px}
+.scrub input{flex:1;accent-color:var(--accent);min-width:80px}
+.health .chk:last-child{border-bottom:0}
+.form{display:flex;flex-direction:column;gap:14px;max-width:560px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>label{font:var(--t-hl)}
+.field input[type=text],.field textarea{width:100%;padding:8px 10px;border:1px solid var(--border-control);border-radius:8px;background:var(--bg-content);font:var(--t-bd)}
+.field .help{font:var(--t-fn);color:var(--fg-secondary)}
+.inline-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.code{font:500 .85rem/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--bg-selected);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:nowrap;min-width:0}
+textarea.note{width:100%;max-width:65ch;border:0;background:transparent;resize:vertical;font:var(--t-co);color:var(--fg-secondary);padding:4px 0;min-height:2.2em}
+textarea.note:focus{outline:none;border-bottom:1px solid var(--separator)}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:48px 16px;color:var(--fg-secondary)}
+.empty .big{width:48px;height:48px;color:var(--fg-tertiary)}
+.empty .co{max-width:44ch}
+
+/* selection bar */
+.selbar{position:sticky;bottom:16px;z-index:5;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:12px;background:var(--bg-elevated);border:1px solid var(--separator);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.selbar .grow{flex:1}
+
+/* overlays */
+.menu,.popover{position:fixed;z-index:80;min-width:250px;max-width:calc(100vw - 16px);background:var(--bg-elevated);border:1px solid var(--separator);border-radius:11px;padding:5px;box-shadow:0 14px 38px rgba(0,0,0,.24)}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:transparent;font:var(--t-bd);text-align:left;cursor:pointer;color:var(--fg-primary)}
+.menu button:hover,.menu button:focus-visible{background:var(--accent);color:var(--fg-on-accent);outline:none}
+.menu button.danger{color:var(--state-danger)}
+.menu button.danger:hover{background:var(--state-danger);color:var(--fg-on-accent)}
+.menu .k{margin-left:auto;font:var(--t-fn);opacity:.7;padding-left:16px}
+.menu hr{border:0;border-top:1px solid var(--separator);margin:5px 8px}
+.menu .mh{font:var(--t-fn);color:var(--fg-tertiary);padding:6px 10px 2px}
+@media (max-width:599px){.menu,.popover{left:8px!important;right:8px!important;top:auto!important;bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;width:auto;max-height:70vh;overflow:auto}.menu button{min-height:44px}}
+.popover{width:380px;padding:12px;max-height:70vh;overflow:auto}
+.popover .ph{font:var(--t-fn);font-weight:600;color:var(--fg-tertiary);padding:8px 6px 4px;text-transform:uppercase;letter-spacing:.06em}
+.sugg{display:flex;align-items:center;gap:10px;width:100%;padding:7px 8px;border:0;border-radius:7px;background:transparent;text-align:left;cursor:pointer;font:var(--t-sh);color:var(--fg-primary)}
+.sugg:hover,.sugg:focus-visible{background:var(--bg-selected);outline:none}
+.sugg .k{margin-left:auto}
+.scrim{position:fixed;inset:0;z-index:90;background:var(--scrim);display:grid;place-items:center;padding:16px}
+.sheet{width:min(540px,100%);max-height:calc(100vh - 48px);overflow:auto;background:var(--bg-elevated);border-radius:var(--radius-sheet);padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:14px}
+.sheet .foot{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:6px;align-items:center}
+.sheet .foot .grow{flex:1}
+.sheet ol{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:6px}
+@media (max-width:599px){.scrim{place-items:end stretch;padding:0}.sheet{width:100%;border-radius:16px 16px 0 0;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));max-height:92vh}.sheet.full{height:100%;max-height:100%;border-radius:0}}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:95;width:max-content;max-width:calc(100vw - 32px)}
+body.has-acc #toast{bottom:84px}
+@media (max-width:599px){#toast{bottom:calc(72px + env(safe-area-inset-bottom,0px))}body.has-acc #toast{bottom:calc(128px + env(safe-area-inset-bottom,0px))}}
+.toast{display:flex;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-radius:12px;background:var(--fg-primary);color:var(--bg-content);font:var(--t-co);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast button{border:0;background:transparent;color:inherit;font:var(--t-hl);cursor:pointer;padding:6px 8px;border-radius:6px;text-decoration:underline}
+.welcome{position:fixed;inset:0;z-index:100;background:var(--bg-content);display:grid;place-items:center;padding:24px clamp(16px,4vw,40px);overflow:auto}
+.welcome .inner{width:min(560px,100%);display:flex;flex-direction:column;gap:18px}
+.mark{width:56px;height:56px;border-radius:14px;background:var(--accent);color:var(--fg-on-accent);display:grid;place-items:center}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:50px;border:0;background:transparent;color:var(--fg-secondary);font:var(--t-c2);cursor:pointer}
+.tab .ic{width:24px;height:24px}
+.tab[aria-current="page"]{color:var(--accent)}
+.acc-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:var(--t-sh)}
+.acc-title b{font-weight:600}
+.modecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.modecard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:18px;border-radius:12px;border:1px solid var(--border-control);background:var(--bg-elevated);cursor:pointer;color:var(--fg-primary)}
+.modecard:hover{border-color:var(--accent)}
+.modecard[disabled]{opacity:.55;cursor:default}
+.proto-note{font:var(--t-fn);color:var(--fg-tertiary)}
+.diff{display:grid;grid-template-columns:7em minmax(0,1fr);gap:4px 12px;font:var(--t-sh);padding:6px 0 10px 56px}
+.diff .k{color:var(--fg-tertiary)}
+.kbd-btn{font:var(--t-c1);color:var(--fg-tertiary);border:1px solid var(--separator);border-radius:5px;padding:1px 6px;background:transparent;cursor:pointer;white-space:nowrap}
+.kbd-btn:hover{color:var(--fg-primary);border-color:var(--border-control)}
+.pal-scrim{position:fixed;inset:0;z-index:97;background:var(--scrim);display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 16px}
+.pal{width:min(620px,100%);background:var(--bg-elevated);border:1px solid var(--separator);border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.35);display:flex;flex-direction:column;overflow:hidden;max-height:76vh}
+.pal-in{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--separator);color:var(--fg-secondary)}
+.pal-in input{flex:1;min-width:0;border:0;background:transparent;outline:none;font:var(--t-t3);color:var(--fg-primary)}
+#pal-list{overflow:auto;padding:6px 8px 8px}
+#pal-list .ph{font:var(--t-fn);font-weight:600;color:var(--fg-tertiary);padding:8px 8px 4px;text-transform:uppercase;letter-spacing:.06em}
+.pal-item[aria-selected="true"]{background:var(--accent-subtle)}
+.pal-foot{padding:8px 16px;border-top:1px solid var(--separator)}
+@media (max-width:599px){.pal-scrim{padding:8px}.pal{max-height:calc(100% - 16px)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+
+<div id="app">
+  <header class="toolbar" id="toolbar"></header>
+  <header class="navbar" id="navbar"></header>
+  <nav class="sidebar" id="sidebar" aria-label="Sections"></nav>
+  <main class="main" id="main" tabindex="-1"></main>
+  <aside class="inspector" id="inspector" aria-label="Inspector" hidden></aside>
+  <div class="accessory" id="accessory" hidden></div>
+  <nav class="tabbar" id="tabbar" aria-label="Tabs"></nav>
+</div>
+<div id="sidescrim" hidden data-act="toggleSidebar"></div>
+<div id="overlay"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="palette"></div>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const hms = s => { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`; };
+const clock = (d = new Date()) => d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+const toSec = s => { const [m, x] = s.split(':').map(Number); return m * 60 + x; };
+const MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const K = s => MAC ? s : s.replace(/\u2318/g, 'Ctrl+').replace(/\u21e7/g, 'Shift+').replace(/\u2325/g, 'Alt+');
+const plural = (n, w, p) => `${n} ${n === 1 ? w : (p || w + 's')}`;
+const isCompact = () => matchMedia('(max-width:599px)').matches;
+const isWide = () => matchMedia('(min-width:1000px)').matches;
+function store(k, v) { try { if (v === undefined) return JSON.parse(localStorage.getItem('v4vmm-proto-' + k)); localStorage.setItem('v4vmm-proto-' + k, JSON.stringify(v)); } catch (e) { return null; } }
+
+const ICONS = {
+  search: '<circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/>',
+  download: '<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+  check: '<path d="M5 12.5 10 17.5 19 7"/>',
+  checkc: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+  warn: '<path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.3v.2"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  more: '<circle cx="6" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
+  play: '<path d="M8 5.5v13l11-6.5z" fill="currentColor" stroke="none"/>',
+  pause: '<rect x="6.5" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/><rect x="13.5" y="5" width="4" height="14" rx="1" fill="currentColor" stroke="none"/>',
+  stop: '<rect x="6.5" y="6.5" width="11" height="11" rx="1.5" fill="currentColor" stroke="none"/>',
+  next: '<path d="M6 6v12l9-6z" fill="currentColor" stroke="none"/><path d="M18 6v12"/>',
+  prev: '<path d="M18 6v12L9 12z" fill="currentColor" stroke="none"/><path d="M6 6v12"/>',
+  live: '<circle cx="12" cy="12" r="2.6" fill="currentColor" stroke="none"/><path d="M8 8a5.7 5.7 0 0 0 0 8M16 8a5.7 5.7 0 0 1 0 8M5.2 5.2a9.6 9.6 0 0 0 0 13.6M18.8 5.2a9.6 9.6 0 0 1 0 13.6"/>',
+  star: '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.8z" fill="currentColor" stroke="none"/>',
+  retry: '<path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/>',
+  handle: '<path d="M6 8h12M6 12h12M6 16h12"/>',
+  sidebar: '<rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M9 4.5v15"/>',
+  inspector: '<rect x="3" y="4.5" width="18" height="15" rx="2.5"/><path d="M15 4.5v15"/>',
+  inbox: '<path d="M4 13.5h4.5l1.5 2.5h4l1.5-2.5H20"/><path d="M6 5h12l2 8.5V19H4v-5.5z"/>',
+  disc: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.4"/>',
+  person: '<circle cx="12" cy="8" r="3.8"/><path d="M4.5 20c.6-3.8 3.7-5.8 7.5-5.8s6.9 2 7.5 5.8"/>',
+  note: '<path d="M9 18V5.5l10-2v12.5"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+  list: '<path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.8" cy="6.5" r="1" fill="currentColor"/><circle cx="4.8" cy="12" r="1" fill="currentColor"/><circle cx="4.8" cy="17.5" r="1" fill="currentColor"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
+  mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+  chevr: '<path d="M9.5 6l6 6-6 6"/>',
+  chevl: '<path d="M14.5 6l-6 6 6 6"/>',
+  chevd: '<path d="M6 9.5l6 6 6-6"/>',
+  close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  compass: '<circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
+  stack: '<rect x="4" y="4" width="16" height="5" rx="1.5"/><rect x="4" y="10.5" width="16" height="4" rx="1.5"/><rect x="4" y="16" width="16" height="4" rx="1.5"/>',
+  people: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19.5c.5-3.2 2.9-5 6-5s5.5 1.8 6 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.2 14.6c2.6.2 4.4 1.8 4.8 4.4"/>',
+  rec: '<circle cx="12" cy="12" r="5.5" fill="currentColor" stroke="none"/>',
+  folder: '<path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.2"/>',
+};
+const ic = (n, cls = '') => `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+
+/* ---------- sample data ---------- */
+const ARTISTS = {
+  doerfels: {name: 'The Doerfels', confirmed: true}, survival: {name: 'Survival Guide', confirmed: true},
+  haleen: {name: 'Haleen', confirmed: true}, nate: {name: 'Nate Grower', confirmed: false},
+  copper: {name: 'Copper Lanterns', confirmed: true}, fern: {name: 'Ollie Fern', confirmed: true},
+  ferry: {name: 'Midnite Ferry', confirmed: false}, sarajade: {name: 'Sara Jade', confirmed: true},
+};
+const TR = {};
+const REL = [];
+function addRel(id, title, artist, kind, year, tracks, o = {}) {
+  const r = {id, title, artist, kind, year, hue: o.hue ?? [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7), isNew: !!o.isNew, tracks: []};
+  r.tracks = tracks.map(([t, d], i) => (TR[`${id}-${i + 1}`] = {id: `${id}-${i + 1}`, rid: id, n: i + 1, title: t, dur: toSec(d), state: o.state || 'none', progress: 0, issue: null}));
+  REL.push(r); return r;
+}
+addRel('deathdreams', 'Deathdreams', 'survival', 'Album', 2023, [['Bad Little Seed','4:09'],['Sour Sorrow','4:24'],['Pie','4:07'],['Blood Perfume','4:00'],['Sharpshooter','4:50'],['Lady Neptune','4:15']], {hue: 18});
+addRel('waytogo', 'Way To Go', 'survival', 'Album', 2022, [['Prohibition','5:06'],['January Shock','4:08'],['Ugly Side','3:56'],['Nowhere Anywhere','3:09'],['Way to Go','3:14']], {state: 'library', hue: 350});
+addRel('discoswag', 'Disco Swag \u2013 The Album', 'doerfels', 'Album', 2024, [['Disco Swag','3:48'],['Come On Down','3:21'],['Mirror Ball','4:02'],['Saturday Shine','3:37'],['Funky Fiddle','3:55'],['Last Dance','4:31']], {state: 'library', hue: 300});
+addRel('thinkep', 'Think EP LIVE!', 'doerfels', 'EP', 2025, [['Think','3:40'],['Hold On','4:12'],['Fiddle Tune','2:58'],['Home Again','4:20']], {isNew: true, hue: 210});
+addRel('comeback', 'Come Back To Me', 'doerfels', 'Single', 2023, [['Come Back To Me','4:23']], {state: 'library', hue: 40});
+addRel('bloodshot', 'Bloodshot Lies', 'doerfels', 'Single', 2025, [['Bloodshot Lies','3:36']], {isNew: true, hue: 0});
+addRel('jamnate', 'Jam With Nate', 'nate', 'Album', 2024, [['Morning Jam','5:10'],['Banjo Run','3:30'],['Back Porch','4:45'],['Creek Song','3:58'],['Night Jam','6:02']], {hue: 120});
+addRel('lowtide', 'Low Tide', 'haleen', 'Single', 2026, [['Low Tide','3:18']], {isNew: true, hue: 190});
+addRel('papermoon', 'Paper Moon', 'haleen', 'Single', 2026, [['Paper Moon','3:44']], {isNew: true, hue: 230});
+addRel('salt', 'Salt', 'haleen', 'Single', 2025, [['Salt','2:56']], {state: 'library', hue: 170});
+addRel('glasshour', 'Glass Hour', 'haleen', 'Single', 2025, [['Glass Hour','3:29']], {state: 'library', hue: 260});
+addRel('kite', 'Kite', 'haleen', 'Single', 2024, [['Kite','3:05']], {hue: 60});
+addRel('harbor', 'Harbor Lights', 'copper', 'Album', 2026, [['Harbor Lights','4:01'],['Lantern Row','3:47'],['Fog Signal','5:12'],['Dock Street','3:33'],['Tidewater','4:28']], {isNew: true, hue: 28});
+addRel('mossy', 'Mossy Stairs', 'fern', 'EP', 2026, [['Mossy Stairs','3:52'],['Green Window','3:15'],['Rain Garden','4:40']], {isNew: true, hue: 95});
+addRel('crossing', 'Night Crossing', 'ferry', 'Single', 2026, [['Night Crossing','4:44']], {isNew: true, hue: 245});
+addRel('wildflower', 'Wildflower Radio', 'sarajade', 'Album', 2021, [['Wildflower Radio','3:41'],['Old Song','2:58'],['Porchlight','3:20'],['Long Road','4:16']], {state: 'library', hue: 330});
+addRel('winter', 'Winter Sketches', 'copper', 'EP', 2020, [['First Snow','3:12'],['Sketch No. 2','2:40'],['Thaw','3:58']], {state: 'dropped', hue: 205});
+TR['waytogo-3'].issue = 'route';
+TR['wildflower-2'].issue = 'removed';
+
+const S = {
+  route: {n: 'discover'}, back: [], fwd: [], tab: 'discover', key: '',
+  sel: {on: false, kind: null, ids: new Set()}, expanded: new Set(), highlight: null,
+  libFilter: 'all', searchSeg: 'top', q: '', inspector: false, sidebarOpen: false, newPl: false, renaming: null,
+  playlists: [
+    {id: 'p42', name: 'Episode 42', note: '', tracks: ['discoswag-1', 'waytogo-1', 'waytogo-3', 'comeback-1', 'thinkep-1', 'salt-1', 'wildflower-2', 'discoswag-4']},
+    {id: 'p41', name: 'Episode 41', note: 'Aired Oct 17.', tracks: ['waytogo-2', 'discoswag-2', 'glasshour-1', 'wildflower-1', 'waytogo-5']},
+    {id: 'pwm', name: 'Winter Mix', note: '', tracks: ['wildflower-3', 'salt-1', 'discoswag-6', 'comeback-1']},
+  ],
+  showPl: 'p42', savedNew: 2, savedSeen: false,
+  menu: null, sheet: null, pop: null,
+  setup: {modeChosen: false, encoder: false, feed: ''},
+  updatesApplied: false,
+  play: {tid: null, plId: null, pos: 0, paused: false, finished: false},
+  show: {mode: 'builtin', stage: 'prepare', checked: false, steps: null, liveStart: 0, listeners: 0, peak: 0, rec: false, recOpt: true, recStart: 0, feedTagDone: false, played: [], ended: 0, issues: [], health: {publisher: 'ok'}, stopServices: false},
+  welcome: !store('welcomed'), welcomeStep: 0,
+  log: [{t: '14:02', text: 'Checked 24 feeds \u2014 3 changed upstream'}],
+};
+let failedOnce = false, uidc = 100;
+const R = id => REL.find(r => r.id === id);
+const T = id => TR[id];
+const PL = id => S.playlists.find(p => p.id === id);
+const artistOf = r => ARTISTS[r.artist];
+const relOfTrack = t => R(t.rid);
+const showPl = () => PL(S.showPl);
+const mono = s => { const w = s.replace(/[^\p{L}\p{N} ]/gu, '').split(/\s+/).filter(Boolean); return ((w[0] || '?')[0] + (w[1] ? w[1][0] : (w[0] || '?')[1] || '')).toUpperCase(); };
+const relDur = r => r.tracks.reduce((s, t) => s + t.dur, 0);
+const plDur = p => p.tracks.reduce((s, id) => s + T(id).dur, 0);
+function relState(r) {
+  const s = r.tracks.map(t => t.state);
+  if (s.some(x => x === 'getting' || x === 'queued')) return 'getting';
+  if (s.every(x => x === 'library')) return r.tracks.some(t => t.issue) ? 'attention' : 'library';
+  if (s.every(x => x === 'dropped')) return 'dropped';
+  if (s.some(x => x === 'library')) return 'partial';
+  if (s.some(x => x === 'failed')) return 'failed';
+  return 'none';
+}
+const ownedRel = r => ['library', 'attention', 'partial'].includes(relState(r));
+const relProgress = r => Math.round(r.tracks.reduce((a, t) => a + (t.state === 'library' ? 100 : t.progress), 0) / r.tracks.length);
+const missingOf = r => r.tracks.filter(t => ['none', 'failed'].includes(t.state));
+
+/* ---------- download engine ---------- */
+const DL = {active: [], queue: [], total: 0, done: 0, failed: 0};
+function getTracks(ids, quiet) {
+  let n = 0;
+  ids.forEach(id => {
+    const t = T(id);
+    if (t.state === 'dropped') { t.state = 'library'; n++; return; }
+    if (['none', 'failed'].includes(t.state)) { t.state = 'queued'; t.progress = 0; DL.queue.push(id); DL.total++; n++; }
+  });
+  pump(); render();
+  return n;
+}
+function pump() {
+  while (DL.active.length < 3 && DL.queue.length) {
+    const id = DL.queue.shift(); const t = T(id);
+    if (t.state !== 'queued') continue;
+    t.state = 'getting'; DL.active.push(id);
+  }
+}
+function cancelTrack(id) {
+  const t = T(id);
+  if (t.state === 'queued') { DL.queue = DL.queue.filter(x => x !== id); DL.total--; t.state = 'none'; render(); }
+}
+setInterval(() => {
+  if (!DL.active.length) return;
+  let changed = false;
+  DL.active.slice().forEach(id => {
+    const t = T(id);
+    t.progress = Math.min(100, t.progress + 7 + Math.random() * 12);
+    if (t.progress >= 100) {
+      DL.active = DL.active.filter(x => x !== id); changed = true;
+      if (id === 'bloodshot-1' && !failedOnce) { failedOnce = true; t.state = 'failed'; t.progress = 0; DL.failed++; S.log.unshift({t: clock(), text: `Couldn't get \u201c${t.title}\u201d: the server returned 404.`, retry: id}); toast(`Couldn't get \u201c${t.title}\u201d. The server returned 404.`, {label: 'Retry', run: () => getTracks([id])}, true); }
+      else { t.state = 'library'; t.progress = 0; DL.done++; }
+    }
+  });
+  if (changed) {
+    pump();
+    if (!DL.active.length && !DL.queue.length && DL.total) { S.log.unshift({t: clock(), text: `Got ${plural(DL.done, 'track')}${DL.failed ? `, ${DL.failed} failed` : ''}`}); DL.total = DL.done = DL.failed = 0; }
+    render();
+  } else updateProgress();
+}, 250);
+function updateProgress() {
+  $$('[data-prog]').forEach(el => {
+    const ref = el.dataset.prog; let p = 0;
+    if (ref.startsWith('r:')) p = relProgress(R(ref.slice(2))); else p = Math.round(T(ref).progress);
+    el.style.setProperty('--p', p); el.setAttribute('aria-valuenow', p);
+  });
+  renderActivityBtn();
+  if (S.pop === 'activity') renderOverlay();
+}
+
+/* ---------- playback + live ---------- */
+const playable = t => t.state === 'library';
+function playFrom(plId, tid) {
+  const p = PL(plId); if (!p) return;
+  let idx = tid ? p.tracks.indexOf(tid) : 0; if (idx < 0) idx = 0;
+  while (idx < p.tracks.length && !playable(T(p.tracks[idx]))) { toast(`Skipped \u201c${T(p.tracks[idx]).title}\u201d. It isn't downloaded yet.`); idx++; }
+  if (idx >= p.tracks.length) { toast('Nothing in this playlist can play yet. Get the tracks first.'); return; }
+  Object.assign(S.play, {plId, tid: p.tracks[idx], pos: 0, paused: false, finished: false});
+  logPlayed(); render();
+}
+function logPlayed() { const t = T(S.play.tid); S.show.played.push({time: clock(), title: t.title, artist: artistOf(relOfTrack(t)).name}); }
+function curIdx() { const p = PL(S.play.plId); return p ? p.tracks.indexOf(S.play.tid) : -1; }
+function nextPlayable(from, dir = 1) { const p = PL(S.play.plId); for (let i = from + dir; i >= 0 && i < p.tracks.length; i += dir) if (playable(T(p.tracks[i]))) return i; return -1; }
+function skip(dir) {
+  const i = nextPlayable(curIdx(), dir);
+  if (i < 0) { if (dir > 0) finishPlaylist(); return; }
+  S.play.tid = PL(S.play.plId).tracks[i]; S.play.pos = 0; S.play.paused = false; logPlayed(); render();
+}
+function finishPlaylist() { S.play.finished = true; S.play.paused = true; render(); }
+function stopPlayback() { Object.assign(S.play, {tid: null, plId: null, pos: 0, paused: false, finished: false}); render(); }
+setInterval(() => {
+  const live = S.show.stage === 'live';
+  if (S.play.tid && !S.play.paused && !S.play.finished) {
+    S.play.pos++;
+    if (S.play.pos >= T(S.play.tid).dur) { skip(1); return; }
+  }
+  if (live && Math.random() < .34) { S.show.listeners = Math.max(3, S.show.listeners + Math.round(Math.random() * 4 - 1.4)); S.show.peak = Math.max(S.show.peak, S.show.listeners); }
+  $$('[data-pos]').forEach(el => { if (S.play.tid) { el.value = S.play.pos; el.max = T(S.play.tid).dur; el.setAttribute('aria-valuetext', `${mmss(S.play.pos)} of ${mmss(T(S.play.tid).dur)}`); } });
+  $$('[data-el]').forEach(el => { if (S.play.tid) el.textContent = mmss(S.play.pos); });
+  $$('[data-remain]').forEach(el => { if (S.play.tid) el.textContent = '-' + mmss(T(S.play.tid).dur - S.play.pos); });
+  $$('[data-liveclock]').forEach(el => el.textContent = hms((Date.now() - S.show.liveStart) / 1000));
+  $$('[data-rec]').forEach(el => el.textContent = hms((Date.now() - S.show.recStart) / 1000));
+  $$('[data-listeners]').forEach(el => el.textContent = S.show.listeners);
+}, 1000);
+
+/* ---------- navigation ---------- */
+const TAB_OF = {discover: 'discover', saved: 'discover', lib: 'library', playlists: 'library', playlist: 'library', show: 'show', search: 'search'};
+function nav(n, id, opts = {}) {
+  if (!opts.noPush) { S.back.push(S.route); S.fwd = []; }
+  S.route = {n, id};
+  if (TAB_OF[n]) S.tab = TAB_OF[n];
+  S.sidebarOpen = false; S.menu = null; S.pop = null;
+  if (S.sel.on) exitSelection(true);
+  if (n === 'saved') { S.q = 'doerfel'; S.savedSeen = true; }
+  render(); $('#main').scrollTop = 0;
+  if (S.highlight) { const el = $(`[data-tid="${S.highlight}"]`); if (el) el.scrollIntoView({block: 'center'}); setTimeout(() => { S.highlight = null; $$('.row.hi').forEach(e => e.classList.remove('hi')); }, 1600); }
+}
+function goBack() { if (!S.back.length) return; S.fwd.push(S.route); S.route = S.back.pop(); if (TAB_OF[S.route.n]) S.tab = TAB_OF[S.route.n]; render(); }
+function goFwd() { if (!S.fwd.length) return; S.back.push(S.route); S.route = S.fwd.pop(); render(); }
+function openRef(ref) {
+  const [k, id] = ref.split(':');
+  if (k === 'release') nav('release', id);
+  else if (k === 'artist') nav('artist', id);
+  else if (k === 'playlist') nav('playlist', id);
+  else if (k === 'track') { S.highlight = id; nav('release', T(id).rid); }
+}
+function routeTitle(r = S.route) {
+  switch (r.n) {
+    case 'discover': return 'Discover'; case 'saved': return 'doerfel';
+    case 'search': return 'Search'; case 'release': return R(r.id).title;
+    case 'artist': return ARTISTS[r.id].name; case 'lib': return {releases: 'Releases', artists: 'Artists', tracks: 'Tracks'}[r.id];
+    case 'playlists': return 'Playlists'; case 'playlist': return PL(r.id)?.name || 'Playlist';
+    case 'inbox': return 'Inbox'; case 'group': return 'Inbox'; case 'updates': return 'Updates';
+    case 'show': return S.show.stage === 'live' ? 'Show \u00b7 Live' : 'Show'; case 'settings': return 'Settings';
+  }
+  return '';
+}
+
+/* ---------- inbox model ---------- */
+function inboxItems() {
+  const items = [], p = showPl();
+  if (p) {
+    const ts = p.tracks.map(T);
+    const route = ts.filter(t => t.state === 'library' && t.issue === 'route');
+    const removed = ts.filter(t => t.state === 'library' && t.issue === 'removed');
+    const missing = ts.filter(t => !['library'].includes(t.state));
+    if (route.length) items.push({sect: `Blocks ${p.name}`, s: 'danger', icon: 'warn', title: `${plural(route.length, 'track')} can't receive payments`, body: 'Their route tag is missing. Listeners can send value only through that tag.', btn: 'Fix All', run: () => fixRoutes(route.map(t => t.id)), open: () => nav('group', 'route')});
+    if (removed.length) items.push({sect: `Blocks ${p.name}`, s: 'danger', icon: 'warn', title: `${plural(removed.length, 'track was', 'tracks were')} removed from ${removed.length === 1 ? 'its feed' : 'their feeds'}`, body: removed.map(t => `\u201c${t.title}\u201d is no longer in ${artistOf(relOfTrack(t)).name}'s RSS feed.`).join(' '), btn: 'Review', run: () => nav('group', 'removed'), open: () => nav('group', 'removed')});
+    if (missing.length) items.push({sect: `Blocks ${p.name}`, s: 'warn', icon: 'download', title: `${plural(missing.length, 'track isn\u2019t', 'tracks aren\u2019t')} downloaded`, body: missing.map(t => `\u201c${t.title}\u201d`).join(', ') + (missing.some(t => ['getting', 'queued'].includes(t.state)) ? ' \u00b7 getting now' : ''), btn: missing.some(t => ['none', 'failed'].includes(t.state)) ? 'Get All' : null, run: () => getTracks(missing.map(t => t.id)), open: () => nav('playlist', p.id)});
+  }
+  if (!S.updatesApplied) items.push({sect: 'Updates', s: 'info', icon: 'retry', title: '3 releases changed upstream \u00b7 1 new track \u00b7 9 files to retag', body: 'Found by the automatic check.', when: '14:02', btn: 'Review', run: () => nav('updates'), open: () => nav('updates')});
+  if (S.show.health.publisher === 'fail') items.push({sect: 'Setup', s: 'danger', icon: 'warn', title: 'Publisher stopped sending', body: 'Listeners see the last song until it restarts.', btn: 'Restart Publisher', run: () => restartPublisher(), open: () => nav('show')});
+  if (!S.setup.encoder) items.push({sect: 'Setup', s: 'warn', icon: 'warn', title: "Stream encoder isn't set up", body: 'Needed to go live. Playing without going live works now.', btn: 'Set Up', run: () => openSetup('encoder'), open: () => openSetup('encoder')});
+  return items;
+}
+function fixRoutes(ids) { ids.forEach(id => T(id).issue = null); toast(`Wrote the payment route tag to ${plural(ids.length, 'file')}.`); render(); }
+function openSetup(which) { S.sheet = null; S.setupOpen = which; nav('settings', 'show'); }
+
+/* ---------- show checks ---------- */
+function checkRows() {
+  const p = showPl(); const ts = p ? p.tracks.map(T) : [];
+  const route = ts.filter(t => t.state === 'library' && t.issue === 'route');
+  const removed = ts.filter(t => t.state === 'library' && t.issue === 'removed');
+  const missing = ts.filter(t => t.state !== 'library');
+  const rows = [];
+  if (S.show.mode === 'builtin') {
+    rows.push({g: 'Music', s: missing.length ? 'warn' : 'ok', title: missing.length ? `${plural(missing.length, 'track isn\u2019t', 'tracks aren\u2019t')} downloaded` : `${plural(ts.length, 'track')} downloaded`, btn: missing.some(t => ['none', 'failed'].includes(t.state)) ? 'Get All' : null, run: () => getTracks(missing.map(t => t.id))});
+  }
+  rows.push({g: 'Music', s: route.length ? 'warn' : 'ok', title: route.length ? `${plural(route.length, 'track')} can't receive payments` : 'Every track can receive payments', btn: route.length ? 'Fix All' : null, run: () => fixRoutes(route.map(t => t.id))});
+  rows.push({g: 'Music', s: removed.length ? 'warn' : 'ok', title: removed.length ? `${plural(removed.length, 'track')} removed from ${removed.length === 1 ? 'its feed' : 'their feeds'}` : 'Feeds checked \u00b7 nothing removed', btn: removed.length ? 'Review' : null, run: () => { S.sheet = null; nav('group', 'removed'); }});
+  if (S.show.mode === 'builtin') rows.push({g: 'Setup', s: 'ok', title: 'Audio player', d: 'mpv \u00b7 sound on'});
+  else rows.push({g: 'Setup', s: 'ok', title: 'Mixxx producer', d: 'mixxx-now-playing \u00b7 active'});
+  rows.push({g: 'Setup', s: 'ok', title: 'Publisher', d: 'studio.local \u00b7 active'});
+  rows.push({g: 'Setup', s: S.setup.encoder ? 'ok' : 'warn', title: 'Stream encoder', d: S.setup.encoder ? 'butt \u00b7 radio.example:8000' : 'not set up', btn: S.setup.encoder ? null : 'Set Up', run: () => openSetup('encoder')});
+  rows.push({g: 'Setup', s: 'ok', title: 'Live event', d: 'Episode 42 \u00b7 live'});
+  return rows;
+}
+const blockers = () => checkRows().filter(r => r.s !== 'ok').length;
+const readyToLive = () => S.show.checked && blockers() === 0;
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg, action, sticky) {
+  const el = $('#toast');
+  el.innerHTML = `<div class="toast"><span>${esc(msg)}</span>${action ? `<button id="toast-act">${esc(action.label)}</button>` : ''}<button id="toast-x" aria-label="Dismiss">${ic('close')}</button></div>`;
+  if (action) $('#toast-act').onclick = () => { action.run(); el.innerHTML = ''; };
+  $('#toast-x').onclick = () => el.innerHTML = '';
+  clearTimeout(toastTimer);
+  if (!sticky) toastTimer = setTimeout(() => el.innerHTML = '', 6000);
+}
+
+/* ---------- actions on items ---------- */
+function refTracks(ref) {
+  if (ref === 'sel') return S.sel.kind === 'release' ? [...S.sel.ids].flatMap(id => R(id).tracks.map(t => t.id)) : [...S.sel.ids];
+  const [k, id] = ref.split(':');
+  return k === 'release' ? R(id).tracks.map(t => t.id) : [id];
+}
+function addToPlaylist(plId, ref) {
+  const p = PL(plId); const ids = refTracks(ref).filter(id => T(id).state !== 'dropped');
+  const added = ids.filter(id => !p.tracks.includes(id));
+  const toGet = added.filter(id => ['none', 'failed'].includes(T(id).state));
+  p.tracks.push(...added);
+  if (toGet.length) getTracks(toGet);
+  if (S.sel.on) exitSelection(true);
+  render();
+  if (!added.length) { toast(`Already in ${p.name}.`); return; }
+  const label = added.length === 1 ? `\u201c${T(added[0]).title}\u201d` : plural(added.length, 'track');
+  toast(`Added ${label} to ${p.name}${toGet.length ? ` \u00b7 getting ${toGet.length}` : ''}.`, {label: 'Undo', run: () => { p.tracks = p.tracks.filter(id => !added.includes(id)); render(); }});
+}
+function dropRefs(trackIds, label) {
+  const prev = trackIds.map(id => [id, T(id).state]).filter(([, s]) => s === 'library');
+  if (!prev.length) return;
+  prev.forEach(([id]) => T(id).state = 'dropped');
+  const inPl = S.playlists.filter(p => p.tracks.some(id => prev.some(([x]) => x === id))).length;
+  if (S.sel.on) exitSelection(true);
+  render();
+  toast(`Dropped ${label}. Files kept${inPl ? ` \u00b7 still in ${plural(inPl, 'playlist')}` : ''}.`, {label: 'Undo', run: () => { prev.forEach(([id, s]) => T(id).state = s); render(); }});
+}
+function askDelete(rid) {
+  const r = R(rid); const n = r.tracks.filter(t => t.state === 'dropped').length;
+  confirmSheet({title: `Delete Files for \u201c${r.title}\u201d?`, body: `<p class="co">${plural(n, 'file')} \u00b7 ${Math.round(n * 8.7)} MB will be removed from disk.</p><p class="co muted">You can get the release again from MusicIndex.</p>`, ok: 'Delete Files', danger: true, run: () => { r.tracks.forEach(t => { if (t.state === 'dropped') t.state = 'none'; }); toast(`Deleted the files for \u201c${r.title}\u201d.`); render(); }});
+}
+function fixTrack(id) {
+  const t = T(id);
+  if (t.issue === 'route') fixRoutes([id]);
+  else if (t.issue === 'removed') nav('group', 'removed');
+}
+function playlistItems(ref) {
+  const items = S.playlists.map(p => ({label: p.name + (p.id === S.showPl ? '  \u2605' : ''), icon: 'list', run: () => addToPlaylist(p.id, ref)}));
+  items.push('-', {label: 'New Playlist\u2026', icon: 'plus', run: () => newPlaylist(ref)});
+  return items;
+}
+function itemMenu(ref) {
+  const [k, id] = ref.split(':'); const items = []; const sp = showPl();
+  if (k === 'release') {
+    const r = R(id), st = relState(r), owned = ownedRel(r);
+    if (['none', 'partial', 'failed'].includes(st)) items.push({label: st === 'partial' ? `Get ${missingOf(r).length} More` : st === 'failed' ? 'Retry' : 'Get', icon: 'download', k: '\u2318D', run: () => getTracks(r.tracks.map(t => t.id))});
+    if (st === 'getting') items.push({label: 'Cancel Queued', icon: 'close', run: () => r.tracks.forEach(t => cancelTrack(t.id))});
+    if (st === 'dropped') items.push({label: 'Get Back', icon: 'download', run: () => getTracks(r.tracks.map(t => t.id))});
+    if (sp && st !== 'dropped') items.push({label: owned ? `Add to ${sp.name}` : `Get and Add to ${sp.name}`, icon: 'plus', k: '\u2318E', run: () => addToPlaylist(sp.id, ref)});
+    if (st !== 'dropped') items.push({label: 'Add to Playlist', icon: 'list', sub: playlistItems(ref)});
+    items.push('-', {label: 'Go to Artist', icon: 'person', run: () => nav('artist', r.artist)}, {label: 'Show Details', icon: 'info', k: '\u2325\u2318I', run: () => { S.inspector = true; if (S.route.n !== 'release' || S.route.id !== id) nav('release', id); else render(); }}, {label: 'Copy Link', icon: 'link', run: () => copyText(`https://musicindex.org/release/${id}`, 'Copied link.')});
+    if (owned) items.push('-', {label: 'Drop', danger: true, k: '\u232b', run: () => dropRefs(r.tracks.map(t => t.id), `\u201c${r.title}\u201d`)});
+    if (st === 'dropped') items.push('-', {label: 'Delete Files\u2026', danger: true, run: () => askDelete(id)});
+  } else if (k === 'track') {
+    const t = T(id), r = relOfTrack(t);
+    if (['none', 'failed'].includes(t.state)) items.push({label: t.state === 'failed' ? 'Retry' : 'Get', icon: 'download', k: '\u2318D', run: () => getTracks([id])});
+    if (t.state === 'queued') items.push({label: 'Cancel', icon: 'close', run: () => cancelTrack(id)});
+    if (t.state === 'dropped') items.push({label: 'Get Back', icon: 'download', run: () => getTracks([id])});
+    if (t.issue) items.push({label: t.issue === 'route' ? 'Fix Payment Route' : 'Review Removal', icon: 'warn', run: () => fixTrack(id)});
+    if (S.route.n === 'playlist') {
+      const p = PL(S.route.id), i = p.tracks.indexOf(id);
+      if (t.state === 'library') items.push({label: 'Play From Here', icon: 'play', run: () => playFrom(p.id, id)});
+      if (i > 0) items.push({label: 'Move Up', k: '\u2325\u2191', run: () => movePl(p, i, i - 1)});
+      if (i < p.tracks.length - 1) items.push({label: 'Move Down', k: '\u2325\u2193', run: () => movePl(p, i, i + 1)});
+      items.push({label: `Remove from ${p.name}`, run: () => removeFromPl(p, id)}, '-');
+    }
+    if (sp && t.state !== 'dropped' && !(S.route.n === 'playlist' && S.route.id === sp.id)) items.push({label: t.state === 'library' ? `Add to ${sp.name}` : `Get and Add to ${sp.name}`, icon: 'plus', k: '\u2318E', run: () => addToPlaylist(sp.id, ref)});
+    if (t.state !== 'dropped') items.push({label: 'Add to Playlist', icon: 'list', sub: playlistItems(ref)});
+    items.push('-', {label: 'Go to Artist', icon: 'person', run: () => nav('artist', r.artist)}, {label: 'Go to Release', icon: 'disc', run: () => { S.highlight = id; nav('release', r.id); }}, {label: 'Show Sources', icon: 'info', k: '\u2325\u2318I', run: () => { S.inspector = true; S.inspTrack = id; if (S.route.n !== 'release') nav('release', r.id); else render(); }});
+    if (t.state === 'library') items.push('-', {label: 'Drop', danger: true, k: '\u232b', run: () => dropRefs([id], `\u201c${t.title}\u201d`)});
+  } else if (k === 'playlist') {
+    const p = PL(id);
+    items.push({label: 'Play', icon: 'play', run: () => playFrom(id)}, {label: 'Check Show', icon: 'checkc', k: '\u21e7\u2318C', run: () => openCheck()});
+    items.push(p.id === S.showPl ? {label: 'Unpin Show Playlist', icon: 'star', run: () => { S.showPl = null; render(); toast(`${p.name} is no longer the show playlist.`); }} : {label: 'Make Show Playlist', icon: 'star', run: () => { S.showPl = id; render(); toast(`${p.name} is now the show playlist. Every track has a one-click add.`); }});
+    items.push({label: 'Rename', run: () => { S.renaming = id; S.focus = '#rename'; render(); }}, '-', {label: 'Delete Playlist\u2026', danger: true, run: () => confirmSheet({title: `Delete \u201c${p.name}\u201d?`, body: `<p class="co">It has ${plural(p.tracks.length, 'track')}. The tracks stay in your library.</p>`, ok: 'Delete Playlist', danger: true, run: () => { S.playlists = S.playlists.filter(x => x !== p); if (S.showPl === id) S.showPl = null; nav('playlists', null, {noPush: true}); toast(`Deleted \u201c${p.name}\u201d.`); }})});
+  } else if (k === 'artist') {
+    const rs = REL.filter(r => r.artist === id), miss = rs.flatMap(missingOf);
+    if (miss.length) items.push({label: `Get ${plural(rs.filter(r => missingOf(r).length).length, 'Missing Release')}`, icon: 'download', run: () => getTracks(miss.map(t => t.id))});
+    items.push({label: 'Go to Artist', icon: 'person', run: () => nav('artist', id)});
+  }
+  return items;
+}
+function movePl(p, from, to) { const [x] = p.tracks.splice(from, 1); p.tracks.splice(to, 0, x); render(); }
+function removeFromPl(p, id) { const i = p.tracks.indexOf(id); p.tracks.splice(i, 1); render(); toast(`Removed \u201c${T(id).title}\u201d from ${p.name}.`, {label: 'Undo', run: () => { p.tracks.splice(i, 0, id); render(); }}); }
+function copyText(text, msg) { try { navigator.clipboard.writeText(text).then(() => toast(msg), () => toast(msg + ' (select and copy it if your browser blocked this.)')); } catch (e) { toast(msg); } }
+
+/* ---------- selection ---------- */
+function enterSelection(kind) { S.sel = {on: true, kind, ids: new Set()}; render(); }
+function exitSelection(silent) { S.sel = {on: false, kind: null, ids: new Set()}; if (!silent) render(); }
+function toggleSel(kind, id) { if (!S.sel.on || S.sel.kind !== kind) S.sel = {on: true, kind, ids: new Set()}; S.sel.ids.has(id) ? S.sel.ids.delete(id) : S.sel.ids.add(id); render(); }
+function selCounts() {
+  const ids = [...S.sel.ids];
+  if (S.sel.kind === 'release') { const rs = ids.map(R); return {get: rs.filter(r => ['none', 'partial', 'failed'].includes(relState(r))).length, add: rs.filter(r => relState(r) !== 'dropped').length, drop: rs.filter(ownedRel).length}; }
+  const ts = ids.map(T); return {get: ts.filter(t => ['none', 'failed'].includes(t.state)).length, add: ts.filter(t => t.state !== 'dropped').length, drop: ts.filter(t => t.state === 'library').length};
+}
+function selbar() {
+  if (!S.sel.on) return '';
+  const n = S.sel.ids.size, c = selCounts(), noun = S.sel.kind === 'release' ? 'release' : 'track';
+  return `<div class="selbar" role="toolbar" aria-label="Selection actions"><span class="hl">${n ? `${n} Selected` : 'Select Items'}</span><span class="grow"></span>
+    ${n && c.get ? `<button class="btn sm primary" data-act="selGet">${ic('download')} Get ${c.get}</button>` : ''}
+    ${n && c.add ? `<button class="btn sm" data-act="selAdd">${ic('plus')} Add to Playlist ${ic('chevd')}</button>` : ''}
+    ${n && c.drop ? `<button class="btn sm danger" data-act="selDrop">Drop ${c.drop}</button>` : ''}
+    <button class="btn sm plain" data-act="selDone">Done</button></div>`;
+}
+
+/* ---------- sheets ---------- */
+function confirmSheet(o) { S.sheet = {kind: 'confirm', ...o}; renderOverlay(); setTimeout(() => $('#sheet-ok')?.focus(), 30); }
+function newPlaylist(ref) {
+  S.menu = null;
+  if (isCompact()) { S.sheet = {kind: 'newpl', ref}; renderOverlay(); setTimeout(() => $('#np-name')?.focus(), 30); return; }
+  S.newPl = {ref}; S.sidebarOpen = true; S.focus = '#side-np'; render();
+}
+function createPlaylist(name, pin, ref) {
+  name = name.trim(); if (!name) return;
+  const p = {id: 'p' + (++uidc), name, note: '', tracks: []};
+  S.playlists.push(p); if (pin) S.showPl = p.id;
+  S.newPl = false; S.sheet = null;
+  if (ref) addToPlaylist(p.id, ref);
+  nav('playlist', p.id);
+  toast(pin ? `Created \u201c${name}\u201d. It's the show playlist now: every track has a \u201c+ ${name}\u201d button.` : `Created \u201c${name}\u201d.`);
+}
+let checkTimer;
+function openCheck() {
+  S.menu = null; S.sheet = {kind: 'check', revealed: 0}; renderOverlay();
+  clearInterval(checkTimer);
+  checkTimer = setInterval(() => { if (!S.sheet || S.sheet.kind !== 'check') return clearInterval(checkTimer); S.sheet.revealed++; if (S.sheet.revealed >= checkRows().length) { clearInterval(checkTimer); S.show.checked = true; if (S.show.stage === 'prepare') S.show.stage = 'check'; render(); } renderOverlay(); }, 380);
+}
+function openGoLive() {
+  if (!readyToLive()) { openCheck(); return; }
+  S.sheet = {kind: 'golive'}; renderOverlay(); setTimeout(() => $('#sheet-ok')?.focus(), 30);
+}
+function startGoingLive() {
+  S.sheet = null;
+  const steps = [{t: 'Event \u201cEpisode 42\u201d is live'}, {t: 'Attached to the publisher on studio.local'}, {t: S.show.mode === 'mixxx' ? 'Mixxx producer is running' : 'Now-playing producer started'}];
+  if (!S.show.feedTagDone) steps.push({t: 'Live tag is in your feed', needsUser: true});
+  steps.push({t: 'Stream connected to radio.example:8000'});
+  if (S.show.recOpt) steps.push({t: 'Recording started'});
+  steps.forEach(s => s.s = 'wait');
+  S.show.steps = steps; S.show.stage = 'going'; if (S.route.n !== 'show') nav('show'); else render();
+  runStep(0);
+}
+function runStep(i) {
+  const st = S.show.steps; if (!st || S.show.stage !== 'going') return;
+  if (i >= st.length) { goLiveDone(); return; }
+  st[i].s = 'run'; render();
+  if (st[i].needsUser) return;
+  setTimeout(() => { if (S.show.stage !== 'going') return; st[i].s = 'ok'; st[i].at = new Date().toLocaleTimeString(); runStep(i + 1); }, 750);
+}
+function goLiveDone() {
+  Object.assign(S.show, {stage: 'live', liveStart: Date.now(), listeners: 12, peak: 12, rec: S.show.recOpt, recStart: Date.now(), issues: []});
+  if (S.show.mode === 'builtin' && (!S.play.tid || S.play.finished)) { S.show.played = []; playFrom(S.showPl); }
+  render(); toast('You are live.');
+}
+function restartPublisher() {
+  S.show.health.publisher = 'restarting'; render();
+  setTimeout(() => { S.show.health.publisher = 'ok'; S.show.issues.push(`Publisher restarted at ${clock()}`); render(); toast('Publisher restarted. Listeners see the current song again.'); }, 1400);
+}
+
+/* ---------- rendering pieces ---------- */
+const art = (r, cls = '') => `<div class="art ${cls}" style="--h:${r.hue}" aria-hidden="true"><span class="mono">${esc(mono(r.title))}</span></div>`;
+const mosaic = (rs, cls = '') => { const f = rs.slice(0, 4); while (f.length && f.length < 4) f.push(...f.slice(0, 4 - f.length)); return f.length ? `<div class="art mosaic ${cls}" aria-hidden="true">${f.map(r => `<i style="--h:${r.hue}"></i>`).join('')}</div>` : `<div class="art ${cls}" aria-hidden="true"><span class="mono">\u266a</span></div>`; };
+const ring = (ref, label) => `<span class="ring" data-prog="${ref}" role="progressbar" aria-label="${esc(label)}" aria-valuemin="0" aria-valuemax="100" style="--p:${ref.startsWith('r:') ? relProgress(R(ref.slice(2))) : Math.round(T(ref).progress)}"></span>`;
+const moreBtn = (ref, label) => `<button class="iconbtn more" data-act="menu" data-a="${ref}" aria-label="More actions for ${esc(label)}" title="More">${ic('more')}</button>`;
+const kindLabel = r => r.kind;
+function relSub(r) { return `${esc(artistOf(r).name)} \u00b7 ${r.kind} \u00b7 ${r.year}`; }
+function relAction(r, inTile) {
+  const st = relState(r), sp = showPl();
+  const b = (label, icon, act, cls = '') => inTile ? `<button class="fab ${cls}" data-act="${act}" data-a="${r.id}" aria-label="${esc(label)} ${esc(r.title)}" title="${esc(label)}">${ic(icon)}</button>` : `<button class="btn sm ${cls}" data-act="${act}" data-a="${r.id}" aria-label="${esc(label)} ${esc(r.title)}">${icon ? ic(icon) : ''} ${esc(label)}</button>`;
+  switch (st) {
+    case 'none': return b('Get', 'download', 'getRel');
+    case 'partial': return b(`Get ${missingOf(r).length}`, 'download', 'getRel');
+    case 'failed': return b('Retry', 'retry', 'getRel');
+    case 'getting': return ring('r:' + r.id, `Getting ${r.title}`);
+    case 'dropped': return inTile ? b('Get Back', 'download', 'getRel') : b('Get Back', '', 'getRel');
+    case 'attention': return b('Fix', 'warn', 'openRel', 'warn');
+    case 'library': return inTile ? `<span class="fab done" title="In library" aria-label="In library">${ic('check')}</span>` : (sp ? (r.tracks.every(t => sp.tracks.includes(t.id)) ? `<span class="badge">${ic('star')} In ${esc(sp.name)}</span>` : `<button class="btn sm" data-act="addShow" data-a="release:${r.id}" aria-label="Add ${esc(r.title)} to ${esc(sp.name)}">${ic('plus')} ${esc(sp.name)}</button>`) : `<span class="badge ok" aria-label="In library">${ic('check')}</span>`);
+  }
+}
+function tile(r) {
+  const sel = S.sel.on && S.sel.kind === 'release';
+  return `<div class="tile ${sel && S.sel.ids.has(r.id) ? 'sel' : ''}" data-open="release:${r.id}" data-sel="release:${r.id}" data-menu="release:${r.id}" data-dragref="release:${r.id}" draggable="true" tabindex="0" role="button" aria-label="${esc(r.title)}, ${r.kind.toLowerCase()} by ${esc(artistOf(r).name)}, ${stateWord(relState(r))}">
+    <div style="position:relative">${art(r)}${r.isNew && relState(r) === 'none' ? '<span class="newtag">NEW</span>' : ''}
+      ${sel ? `<span class="t-check"><input type="checkbox" class="cbx" tabindex="-1" ${S.sel.ids.has(r.id) ? 'checked' : ''} aria-hidden="true"></span>` : `<span class="t-act">${relAction(r, true)}</span>`}</div>
+    <div class="t-title">${esc(r.title)}</div><div class="t-sub">${esc(artistOf(r).name)} \u00b7 ${r.kind}</div></div>`;
+}
+function stateWord(st) { return {none: 'not in library', partial: 'partly in library', getting: 'getting', library: 'in library', attention: 'in library, needs attention', dropped: 'dropped', failed: 'failed'}[st]; }
+function relRow(r, o = {}) {
+  const sel = S.sel.on && S.sel.kind === 'release';
+  return `<div class="row clickable ${o.indent ? 'indent' : ''} ${sel && S.sel.ids.has(r.id) ? 'sel' : ''}" data-open="release:${r.id}" data-sel="release:${r.id}" data-menu="release:${r.id}" data-dragref="release:${r.id}" draggable="true" tabindex="0" role="button" aria-label="${esc(r.title)}, ${stateWord(relState(r))}">
+    ${sel ? `<input type="checkbox" class="cbx" tabindex="-1" ${S.sel.ids.has(r.id) ? 'checked' : ''} aria-hidden="true">` : art(r, 'sm')}
+    <div class="r-main"><div class="r-title">${esc(r.title)}</div><div class="r-sub">${relSub(r)}${o.size ? ` \u00b7 ${Math.round(r.tracks.length * 8.7)} MB` : ''}</div></div>
+    <div class="r-trail">${relState(r) === 'attention' ? `<span class="badge warn">${ic('warn')} Needs attention</span>` : ''}${sel ? '' : relAction(r)}${sel ? '' : moreBtn('release:' + r.id, r.title)}</div></div>`;
+}
+function trackAction(t) {
+  const sp = showPl();
+  switch (t.state) {
+    case 'none': return `<button class="btn sm" data-act="getTrack" data-a="${t.id}" aria-label="Get ${esc(t.title)}">${ic('download')} Get</button>`;
+    case 'failed': return `<span class="badge danger">${ic('warn')} Failed</span><button class="btn sm" data-act="getTrack" data-a="${t.id}" aria-label="Retry getting ${esc(t.title)}">${ic('retry')} Retry</button>`;
+    case 'queued': return `<span class="badge">Queued</span><button class="iconbtn" data-act="cancelTrack" data-a="${t.id}" aria-label="Cancel getting ${esc(t.title)}" title="Cancel">${ic('close')}</button>`;
+    case 'getting': return ring(t.id, `Getting ${t.title}`);
+    case 'dropped': return `<button class="btn sm" data-act="getTrack" data-a="${t.id}" aria-label="Get ${esc(t.title)} back">Get Back</button>`;
+    case 'library':
+      if (t.issue) return `<button class="btn sm warn" data-act="fixTrack" data-a="${t.id}" aria-label="Fix: ${t.issue === 'route' ? 'route tag missing' : 'removed from feed'}">${ic('warn')} Fix</button>`;
+      if (!sp) return `<span class="badge ok" aria-label="In library">${ic('check')}</span>`;
+      if (sp.tracks.includes(t.id)) return `<span class="badge" title="In ${esc(sp.name)}">${ic('star')} In ${esc(sp.name)}</span>`;
+      return `<button class="btn sm" data-act="addShow" data-a="track:${t.id}" aria-label="Add ${esc(t.title)} to ${esc(sp.name)}">${ic('plus')} ${esc(sp.name)}</button>`;
+  }
+}
+function trackRow(t, o = {}) {
+  const r = relOfTrack(t), sel = S.sel.on && S.sel.kind === 'track';
+  const lead = sel ? `<input type="checkbox" class="cbx" tabindex="-1" ${S.sel.ids.has(t.id) ? 'checked' : ''} aria-hidden="true">` : (o.num ? `<span class="r-num">${t.n}</span>` : art(r, 'sm'));
+  return `<div class="row ${o.num ? 'track' : ''} clickable ${sel && S.sel.ids.has(t.id) ? 'sel' : ''} ${S.highlight === t.id ? 'hi' : ''}" data-tid="${t.id}" ${o.num ? '' : `data-open="track:${t.id}"`} data-sel="track:${t.id}" data-menu="track:${t.id}" data-dragref="track:${t.id}" draggable="true" tabindex="0" ${o.num ? '' : 'role="button"'} aria-label="${esc(t.title)}">
+    ${lead}<div class="r-main"><div class="r-title">${esc(t.title)}</div>${o.num ? '' : `<div class="r-sub">${esc(artistOf(r).name)} \u00b7 ${esc(r.title)}</div>`}</div>
+    ${o.num ? `<span class="dur">${mmss(t.dur)}</span>` : ''}
+    <div class="r-trail">${o.num ? '' : `<span class="dur">${mmss(t.dur)}</span>`}${sel ? '' : trackAction(t)}${sel ? '' : moreBtn('track:' + t.id, t.title)}</div></div>`;
+}
+function artistRow(id) {
+  const a = ARTISTS[id], rs = REL.filter(r => r.artist === id), own = rs.filter(ownedRel).length, miss = rs.filter(r => missingOf(r).length && relState(r) !== 'dropped').length;
+  return `<div class="row clickable" data-open="artist:${id}" data-menu="artist:${id}" tabindex="0" role="button" aria-label="${esc(a.name)}, artist">
+    ${mosaic(rs, 'sm round')}<div class="r-main"><div class="r-title">${esc(a.name)}</div><div class="r-sub">${a.confirmed ? 'Artist' : 'Name only'} \u00b7 ${plural(rs.length, 'release')} \u00b7 ${own} in library</div></div>
+    <div class="r-trail">${miss ? `<button class="btn sm" data-act="getArtist" data-a="${id}" aria-label="Get ${miss} missing releases by ${esc(a.name)}">${ic('download')} Get ${miss} Missing</button>` : ''}${moreBtn('artist:' + id, a.name)}</div></div>`;
+}
+const selectBtn = kind => S.sel.on && S.sel.kind === kind ? `<button class="btn sm plain" data-act="selDone">Done</button>` : `<button class="btn sm" data-act="selMode" data-a="${kind}">Select</button>`;
+const pageHead = (title, sub = '', tools = '') => `<header class="page-h"><div><h1 class="lt">${title}</h1>${sub ? `<p class="sh muted sub">${sub}</p>` : ''}</div>${tools ? `<div class="sec-tools">${tools}</div>` : ''}</header>`;
+const empty = (icon, title, body, actions = '') => `<div class="empty">${ic(icon, 'big')}<h2 class="t3">${title}</h2><p class="co">${body}</p><div class="actions">${actions}</div></div>`;
+function libChips(active) {
+  const c = (id, label, n) => `<button aria-pressed="${active === id}" data-act="${n}" data-a="${id}">${label}</button>`;
+  return `<div class="seg compact-only chips" role="group" aria-label="Library sections">${c('releases', 'Releases', 'navLib')}${c('artists', 'Artists', 'navLib')}${c('tracks', 'Tracks', 'navLib')}${c('playlists', 'Playlists', 'navPlaylists')}</div>`;
+}
+
+/* ---------- pages ---------- */
+function pageDiscover() {
+  const list = REL.filter(r => relState(r) !== 'dropped').sort((a, b) => b.year - a.year || b.isNew - a.isNew).slice(0, 12);
+  const saved = REL.filter(r => r.artist === 'doerfels');
+  return `<div class="page">${pageHead('Discover')}
+    <section class="sec"><div class="sec-h"><h2 class="t2">New Releases</h2><div class="sec-tools">${selectBtn('release')}</div></div>
+      <div class="grid">${list.map(tile).join('')}</div>
+      <div><button class="btn" data-act="loadMore">Load More</button></div></section>
+    <section class="sec"><div class="sec-h"><h2 class="t2">doerfel${!S.savedSeen ? ` \u00b7 <span class="muted">${S.savedNew} new since Monday</span>` : ''}</h2><button class="link" data-act="nav" data-a="saved">Open ${ic('chevr')}</button></div>
+      <div class="shelf">${saved.map(tile).join('')}</div></section>
+    ${selbar()}</div>`;
+}
+function searchData(q) {
+  q = q.trim().toLowerCase(); if (!q) return null;
+  const cmdOnly = q.startsWith('>'); const qq = cmdOnly ? q.slice(1).trim() : q;
+  const actions = COMMANDS.filter(c => (!c.when || c.when()) && c.label.toLowerCase().includes(qq));
+  if (cmdOnly) return {actions, releases: [], artists: [], tracks: []};
+  return {actions, releases: REL.filter(r => (r.title + ' ' + artistOf(r).name).toLowerCase().includes(qq)), artists: Object.keys(ARTISTS).filter(id => ARTISTS[id].name.toLowerCase().includes(qq)), tracks: Object.values(TR).filter(t => (t.title + ' ' + artistOf(relOfTrack(t)).name).toLowerCase().includes(qq))};
+}
+function searchResultsHTML() {
+  const d = searchData(S.q);
+  if (!d) return `<section class="sec"><h2 class="t2">Actions</h2><p class="co muted">Everything the app can do. Type to filter, or start with \u201c>\u201d to search actions only.</p>
+    <div class="list">${COMMANDS.filter(c => !c.when || c.when()).map(c => `<button class="sugg" data-act="cmd" data-a="${COMMANDS.indexOf(c)}">${ic(c.icon || 'chevr')} ${esc(c.label)} ${c.k ? `<kbd class="k">${K(c.k)}</kbd>` : ''}</button>`).join('')}</div></section>`;
+  const seg = S.searchSeg, top = seg === 'top';
+  const sec = (title, n, html, key) => n ? `<section class="sec"><div class="sec-h"><h2 class="t2">${title}</h2>${top && n > 3 ? `<button class="link" data-act="seg" data-a="${key}">See All ${ic('chevr')}</button>` : ''}</div><div class="list">${html}</div></section>` : '';
+  const lim = a => top ? a.slice(0, 3) : a;
+  let out = '';
+  if (top && d.actions.length) out += `<section class="sec"><h2 class="t2">Actions</h2><div class="list">${d.actions.slice(0, 4).map(c => `<button class="sugg" data-act="cmd" data-a="${COMMANDS.indexOf(c)}">${ic(c.icon || 'chevr')} ${esc(c.label)} ${c.k ? `<kbd class="k">${K(c.k)}</kbd>` : ''}</button>`).join('')}</div></section>`;
+  if (top || seg === 'artists') out += sec('Artists', d.artists.length, lim(d.artists).map(artistRow).join(''), 'artists');
+  if (top || seg === 'releases') out += sec('Releases', d.releases.length, lim(d.releases).map(r => relRow(r)).join(''), 'releases');
+  if (top || seg === 'tracks') out += sec('Tracks', d.tracks.length, lim(d.tracks).map(t => trackRow(t)).join(''), 'tracks');
+  return out || empty('search', `No results for \u201c${esc(S.q)}\u201d`, 'Check the spelling, or try an artist or release name.');
+}
+function pageSearch(saved) {
+  const d = searchData(S.q);
+  const seg = (id, label, n) => `<button aria-pressed="${S.searchSeg === id}" data-act="seg" data-a="${id}">${label}${n != null ? ` ${n}` : ''}</button>`;
+  return `<div class="page">
+    <div class="tb-search compact-only" style="width:100%;height:40px">${ic('search')}<input id="q2" type="search" placeholder="Search music and actions" value="${esc(S.q)}" autocomplete="off" aria-label="Search music and actions"></div>
+    ${pageHead(saved ? 'doerfel' : (S.q ? `Results for \u201c${esc(S.q)}\u201d` : 'Search'), saved ? 'Saved search \u00b7 Library and MusicIndex' : '', S.q && !saved ? `<button class="btn sm" data-act="saveSearch">Save Search</button>` : (saved ? `<button class="btn sm danger" data-act="loadMore">Delete\u2026</button>` : ''))}
+    ${d && (d.releases.length + d.artists.length + d.tracks.length) ? `<div class="sec-h"><div class="seg" role="group" aria-label="Result kind">${seg('top', 'Top')}${seg('releases', 'Releases', d.releases.length)}${seg('artists', 'Artists', d.artists.length)}${seg('tracks', 'Tracks', d.tracks.length)}</div>${S.searchSeg === 'releases' ? selectBtn('release') : S.searchSeg === 'tracks' ? selectBtn('track') : ''}</div>` : ''}
+    <div id="sres" class="sec" style="gap:28px">${searchResultsHTML()}</div>${selbar()}</div>`;
+}
+function pageRelease(id) {
+  const r = REL.find(x => x.id === id), st = relState(r), sp = showPl(), a = artistOf(r);
+  const kind = r.kind, n = r.tracks.length, have = r.tracks.filter(t => t.state === 'library').length;
+  const stateText = {none: 'Not in library', partial: `${have} of ${n} in library`, getting: `Getting ${r.tracks.filter(t => ['getting', 'queued'].includes(t.state)).length}`, library: `${ic('check')} In library`, attention: `${ic('warn')} In library \u00b7 needs attention`, dropped: 'Dropped \u00b7 files kept', failed: `${ic('warn')} Failed`}[st];
+  let primary = '', secondary = '';
+  const addBtn = `<button class="btn" data-act="menuAdd" data-a="release:${id}">${ic('plus')} Add to Playlist ${ic('chevd')}</button>`;
+  if (st === 'none') { primary = `<button class="btn primary" data-act="getRel" data-a="${id}">${ic('download')} Get ${kind}</button>`; secondary = addBtn; }
+  else if (st === 'partial') { primary = `<button class="btn primary" data-act="getRel" data-a="${id}">${ic('download')} Get ${n - have} More</button>`; secondary = addBtn; }
+  else if (st === 'failed') { primary = `<button class="btn primary" data-act="getRel" data-a="${id}">${ic('retry')} Retry</button>`; }
+  else if (st === 'getting') { primary = `<button class="btn primary" disabled>${ring('r:' + id, 'Getting')} Getting ${have} of ${n}</button>`; secondary = addBtn; }
+  else if (st === 'library' || st === 'attention') { primary = sp ? (r.tracks.every(t => sp.tracks.includes(t.id)) ? `<button class="btn" disabled>${ic('star')} In ${esc(sp.name)}</button>` : `<button class="btn primary" data-act="addShow" data-a="release:${id}">${ic('plus')} Add to ${esc(sp.name)}</button>`) : `<button class="btn primary" data-act="menuAdd" data-a="release:${id}">${ic('plus')} Add to Playlist ${ic('chevd')}</button>`; if (sp) secondary = addBtn; }
+  else if (st === 'dropped') { primary = `<button class="btn primary" data-act="getRel" data-a="${id}">Get Back</button>`; }
+  const more = REL.filter(x => x.artist === r.artist && x.id !== id);
+  const tsel = S.sel.on && S.sel.kind === 'track';
+  return `<div class="page">
+    <header class="hdr">${art(r, 'hdr')}<div class="meta">
+      <span class="eyebrow"><span class="dot" style="--e:var(--entity-release)"></span>Release \u00b7 ${kind}</span>
+      <h1 class="t1">${esc(r.title)}</h1>
+      <div><button class="name-link" data-act="nav" data-a="artist" data-b="${r.artist}">${esc(a.name)} \u203a</button>${a.confirmed ? '' : ' <span class="c1 muted">\u00b7 name only</span>'}</div>
+      <p class="sh muted num">${r.year} \u00b7 ${plural(n, 'track')} \u00b7 ${Math.round(relDur(r) / 60)} min \u00b7 ${stateText}</p>
+      <div class="actions">${primary}${secondary}${moreBtn('release:' + id, r.title).replace('iconbtn more', 'iconbtn')}</div>
+    </div></header>
+    <p class="desc">Recorded live and straight from the feed. Sample description: the real one comes from the release's RSS feed.</p>
+    <section class="sec"><div class="sec-h"><h2 class="t2">Tracks</h2><div class="sec-tools">${selectBtn('track')}</div></div>
+      <div><div class="colhead"><span style="text-align:right">#</span><span>Title</span><span>Time</span><span></span></div>
+      <div class="list">${r.tracks.map(t => trackRow(t, {num: true})).join('')}</div></div></section>
+    ${more.length ? `<section class="sec"><div class="sec-h"><h2 class="t2">More by ${esc(a.name)}</h2><button class="link" data-act="nav" data-a="artist" data-b="${r.artist}">See All ${ic('chevr')}</button></div><div class="shelf">${more.map(tile).join('')}</div></section>` : ''}
+    ${selbar()}</div>`;
+}
+function pageArtist(id) {
+  const a = ARTISTS[id], rs = REL.filter(r => r.artist === id).sort((x, y) => y.year - x.year);
+  const big = rs.filter(r => r.kind !== 'Single'), singles = rs.filter(r => r.kind === 'Single');
+  const miss = rs.filter(r => missingOf(r).length && relState(r) !== 'dropped');
+  const others = Object.keys(ARTISTS).filter(x => x !== id).slice(0, 3);
+  return `<div class="page">
+    <header class="hdr">${mosaic(rs, 'hdr')}<div class="meta">
+      <span class="eyebrow"><span class="dot ${a.confirmed ? '' : 'hollow'}" style="--e:var(--entity-artist)"></span>${a.confirmed ? 'Artist' : 'Name only'}</span>
+      <h1 class="t1">${esc(a.name)}</h1>
+      <p class="sh muted">${plural(rs.length, 'release')} \u00b7 ${rs.filter(ownedRel).length} in library</p>
+      ${a.confirmed ? '' : '<p class="co muted">Grouped by name. Different artists may share it.</p>'}
+      <div class="actions">${miss.length ? `<button class="btn primary" data-act="getArtist" data-a="${id}">${ic('download')} Get ${miss.length} Missing</button>` : `<span class="badge ok">${ic('check')} You have everything</span>`}</div>
+    </div></header>
+    ${big.length ? `<section class="sec"><h2 class="t2">Albums & EPs</h2><div class="grid">${big.map(tile).join('')}</div></section>` : ''}
+    ${singles.length ? `<section class="sec"><div class="sec-h"><h2 class="t2">Singles \u00b7 ${singles.length}</h2>${selectBtn('release')}</div><div class="list">${singles.map(r => relRow(r)).join('')}</div></section>` : ''}
+    <section class="sec"><h2 class="t2">Shares Releases With</h2><div class="list">${others.map(artistRow).join('')}</div></section>
+    ${selbar()}</div>`;
+}
+function pageLib(which) {
+  if (which === 'artists') {
+    const ids = Object.keys(ARTISTS).filter(id => REL.some(r => r.artist === id && ownedRel(r)));
+    return `<div class="page">${libChips('artists')}${pageHead('Artists', plural(ids.length, 'artist') + ' in your library')}<div class="list">${ids.map(artistRow).join('')}</div></div>`;
+  }
+  if (which === 'tracks') {
+    const ts = Object.values(TR).filter(t => ['library', 'getting', 'queued'].includes(t.state));
+    return `<div class="page">${libChips('tracks')}${pageHead('Tracks', plural(ts.length, 'track'), selectBtn('track'))}
+      <div class="list">${ts.length ? ts.map(t => trackRow(t)).join('') : empty('note', 'No tracks yet', 'Get a release in Discover and its tracks appear here.', `<button class="btn primary" data-act="nav" data-a="discover">Go to Discover</button>`)}</div>${selbar()}</div>`;
+  }
+  const owned = REL.filter(ownedRel).concat(REL.filter(r => relState(r) === 'getting'));
+  const attention = REL.filter(r => relState(r) === 'attention');
+  const dropped = REL.filter(r => relState(r) === 'dropped');
+  const f = S.libFilter;
+  const seg = (id, label, n) => `<button aria-pressed="${f === id}" data-act="libFilter" data-a="${id}">${label} ${n}</button>`;
+  let body = '';
+  if (f === 'all') {
+    const groups = {}; owned.filter(r => r.kind === 'Single').forEach(r => (groups[r.artist] = groups[r.artist] || []).push(r));
+    const done = new Set();
+    body = owned.map(r => {
+      const g = groups[r.artist];
+      if (r.kind === 'Single' && g && g.length >= 2) {
+        if (done.has(r.artist)) return '';
+        done.add(r.artist);
+        const all = REL.filter(x => x.artist === r.artist && x.kind === 'Single'), have = all.filter(ownedRel).length, miss = all.filter(x => missingOf(x).length).length, open = S.expanded.has(r.artist);
+        return `<div class="row clickable" data-act="toggleGroup" data-a="${r.artist}" tabindex="0" role="button" aria-expanded="${open}" aria-label="Singles by ${esc(ARTISTS[r.artist].name)}">
+          ${mosaic(all, 'sm')}<div class="r-main"><div class="r-title">Singles by ${esc(ARTISTS[r.artist].name)}</div><div class="r-sub">${plural(all.length, 'single')} \u00b7 ${have} in library</div></div>
+          <div class="r-trail">${miss ? `<button class="btn sm" data-act="getSingles" data-a="${r.artist}">${ic('download')} Get ${miss}</button>` : ''}<span class="iconbtn" aria-hidden="true">${ic(open ? 'chevd' : 'chevr')}</span></div></div>
+          ${open ? all.map(x => relRow(x, {indent: true})).join('') : ''}`;
+      }
+      return relRow(r);
+    }).join('');
+  } else if (f === 'attention') body = attention.length ? attention.map(r => relRow(r)).join('') : empty('checkc', 'Nothing needs attention', 'Every release in your library is ready for a show.');
+  else body = (dropped.length ? `<div class="sec-h"><p class="co muted">Dropped releases keep their files until you delete them. ${Math.round(dropped.reduce((a, r) => a + r.tracks.length, 0) * 8.7)} MB.</p></div>` + dropped.map(r => relRow(r, {size: true})).join('') : empty('checkc', 'Nothing dropped', 'When you drop a release, its files wait here until you delete them or get it back.'));
+  return `<div class="page">${libChips('releases')}${pageHead('Releases', '', selectBtn('release'))}
+    <div class="seg" role="group" aria-label="Filter">${seg('all', 'All', owned.length)}${seg('attention', 'Needs Attention', attention.length)}${seg('dropped', 'Dropped', dropped.length)}</div>
+    <div class="list">${body}</div>${selbar()}</div>`;
+}
+function pagePlaylists() {
+  return `<div class="page">${libChips('playlists')}${pageHead('Playlists', '', `<button class="btn primary" data-act="newPl">${ic('plus')} New Playlist</button>`)}
+    <div class="list">${S.playlists.length ? S.playlists.map(p => `<div class="row clickable" data-open="playlist:${p.id}" data-menu="playlist:${p.id}" data-drop-pl="${p.id}" tabindex="0" role="button" aria-label="${esc(p.name)} playlist">
+      ${mosaic(p.tracks.map(id => relOfTrack(T(id))), 'sm')}<div class="r-main"><div class="r-title">${p.id === S.showPl ? ic('star') + ' ' : ''}${esc(p.name)}</div><div class="r-sub num">${plural(p.tracks.length, 'track')} \u00b7 ${Math.round(plDur(p) / 60)} min${p.id === S.showPl ? ' \u00b7 show playlist' : ''}</div></div>
+      <div class="r-trail">${moreBtn('playlist:' + p.id, p.name)}</div></div>`).join('') : empty('list', 'No playlists yet', 'Playlists are how you plan a show. Add tracks from anywhere.', `<button class="btn primary" data-act="newPl">New Playlist</button>`)}</div></div>`;
+}
+function pagePlaylist(id) {
+  const p = PL(id); if (!p) return empty('list', 'This playlist was deleted', '', `<button class="btn" data-act="navPlaylists">Show Playlists</button>`);
+  const ts = p.tracks.map(T), ready = ts.filter(t => t.state === 'library' && !t.issue).length, att = ts.filter(t => t.issue || t.state !== 'library').length;
+  const isShow = p.id === S.showPl;
+  const end = new Date(Date.now() + plDur(p) * 1000);
+  const tsel = S.sel.on && S.sel.kind === 'track';
+  const row = (t, i) => `<div class="row pl clickable ${tsel && S.sel.ids.has(t.id) ? 'sel' : ''} ${S.play.tid === t.id && S.play.plId === p.id ? 'hi' : ''}" data-tid="${t.id}" data-sel="track:${t.id}" data-menu="track:${t.id}" data-drag="${p.id}:${t.id}" data-dblplay="${p.id}:${t.id}" draggable="true" tabindex="0" aria-label="${i + 1}. ${esc(t.title)}">
+    <span class="handle" aria-label="Reorder ${esc(t.title)}" title="Drag to reorder">${tsel ? `<input type="checkbox" class="cbx" tabindex="-1" ${S.sel.ids.has(t.id) ? 'checked' : ''} aria-hidden="true">` : ic('handle')}</span>
+    <span class="r-num sh faint num" style="text-align:right">${S.play.tid === t.id && S.play.plId === p.id ? ic('play') : i + 1}</span>
+    <div class="r-main"><div class="r-title">${esc(t.title)}</div><div class="r-sub">${esc(artistOf(relOfTrack(t)).name)}</div></div>
+    <span class="dur">${mmss(t.dur)}</span>
+    <div class="r-trail">${t.state === 'library' && !t.issue ? `<span class="badge ok" aria-label="Ready">${ic('check')}</span>` : (tsel ? '' : trackAction(t))}${tsel ? '' : moreBtn('track:' + t.id, t.title)}</div></div>`;
+  const nameEl = S.renaming === id ? `<input id="rename" class="t1" style="border:1px solid var(--focus-ring);border-radius:8px;padding:2px 8px;background:var(--bg-content);width:100%;max-width:520px" value="${esc(p.name)}" aria-label="Playlist name">` : `<h1 class="t1">${esc(p.name)}</h1>`;
+  return `<div class="page">
+    <header class="hdr">${mosaic(ts.map(relOfTrack), 'hdr')}<div class="meta">
+      <span class="eyebrow">${isShow ? ic('star') : `<span class="dot" style="--e:var(--entity-playlist)"></span>`}${isShow ? 'Show Playlist' : 'Playlist'}</span>
+      ${nameEl}
+      <p class="sh muted num">${plural(ts.length, 'track')} \u00b7 ${Math.round(plDur(p) / 60)} min \u00b7 ${ready} ready${att ? ` \u00b7 <span style="color:var(--state-warn)">${ic('warn')} ${att} need attention</span>` : ''}</p>
+      <div class="actions"><button class="btn primary" data-act="playPl" data-a="${id}" ${ts.length ? '' : 'disabled'}>${ic('play')} Play</button><button class="btn" data-act="check" ${ts.length ? '' : 'disabled'}>${ic('checkc')} Check Show</button>${moreBtn('playlist:' + id, p.name).replace('iconbtn more', 'iconbtn')}</div>
+      <textarea class="note" id="pl-note" data-pl="${id}" rows="1" placeholder="Add a note for this episode\u2026" aria-label="Playlist note">${esc(p.note)}</textarea>
+    </div></header>
+    ${ts.length ? `<section class="sec"><div class="sec-h"><h2 class="t2">Tracks</h2><div class="sec-tools">${selectBtn('track')}</div></div><div class="list" data-pl-list="${id}">${ts.map(row).join('')}</div>
+      <p class="fn muted num" style="text-align:right">Total ${mmss(plDur(p))} \u00b7 ends at \u2248 ${clock(end)} if you start now</p></section>`
+      : empty('list', 'Your playlist is empty', isShow ? `Every track now has a \u201c+ ${esc(p.name)}\u201d button. Start in Discover or Search.` : 'Add tracks from any release, search result or artist page.', `<button class="btn primary" data-act="nav" data-a="discover">Go to Discover</button><button class="btn" data-act="focusSearch">Search</button>`)}
+    ${selbar()}</div>`;
+}
+function pageInbox() {
+  const items = inboxItems(); const sects = [...new Set(items.map(i => i.sect))];
+  S._inbox = items;
+  return `<div class="page">${pageHead('Inbox', items.length ? `${plural(items.length, 'thing needs', 'things need')} you \u00b7 last check 14:02` : 'All clear \u00b7 last checked 14:02', `<button class="btn sm" data-act="checkNow">${ic('retry')} Check Now</button>`)}
+    ${items.length ? sects.map(s => `<section class="sec"><h2 class="t2">${esc(s)}</h2><div class="stack">${items.map((it, i) => it.sect === s ? `<div class="inbox-item" data-act="inboxOpen" data-a="${i}" tabindex="0" role="button" aria-label="${esc(it.title)}">
+      <span class="s ${it.s}">${ic(it.icon)}</span><div><div class="hl">${esc(it.title)}</div><div class="body">${esc(it.body)}</div>${it.when ? `<div class="when">Found ${it.when}</div>` : ''}</div>
+      <div class="inline-row">${it.btn ? `<button class="btn sm" data-act="inboxRun" data-a="${i}">${esc(it.btn)}</button>` : ''}<span class="faint">${ic('chevr')}</span></div></div>` : '').join('')}</div></section>`).join('')
+      : empty('checkc', 'All clear', 'Nothing needs you right now. Background checks will put anything new here.')}
+    <section class="sec"><h2 class="t2">Done Today</h2><div class="list">${S.log.slice(0, 5).map(l => `<div class="row"><span class="badge ok">${ic('check')}</span><div class="r-main"><div class="co">${esc(l.text)}</div></div><span class="fn faint num">${l.t}</span></div>`).join('')}</div></section></div>`;
+}
+function pageGroup(kind) {
+  const p = showPl(); const all = Object.values(TR).filter(t => t.state === 'library' && t.issue === kind);
+  if (kind === 'route') return `<div class="page">${pageHead(`${plural(all.length, 'track')} can't receive payments`, '', all.length ? `<button class="btn primary" data-act="fixAllRoutes">Fix All</button>` : '')}
+    <p class="desc">Listeners' payments go to the artist through a route tag in each file. These files don't have one yet. Fixing writes the tag from the release's feed.</p>
+    <div class="list">${all.length ? all.map(t => trackRow(t)).join('') : empty('checkc', 'All fixed', 'Every track can receive payments.', `<button class="btn" data-act="nav" data-a="inbox">Back to Inbox</button>`)}</div></div>`;
+  return `<div class="page">${pageHead(`${plural(all.length, 'track')} removed from ${all.length === 1 ? 'its feed' : 'their feeds'}`)}
+    <p class="desc">The artist took these tracks out of their RSS feed. Your file still plays, but the artist may not want it used. Decide for each one.</p>
+    <div class="list">${all.length ? all.map(t => `<div class="row"><div>${art(relOfTrack(t), 'sm')}</div><div class="r-main"><div class="r-title">${esc(t.title)}</div><div class="r-sub">${esc(artistOf(relOfTrack(t)).name)}${p && p.tracks.includes(t.id) ? ` \u00b7 in ${esc(p.name)}` : ''}</div></div>
+      <div class="r-trail" style="flex-wrap:wrap;justify-content:flex-end"><button class="btn sm" data-act="keepTrack" data-a="${t.id}">Keep Anyway</button><button class="btn sm" data-act="rmFromAll" data-a="${t.id}">Remove from Playlists</button><button class="btn sm danger" data-act="dropTrack" data-a="${t.id}">Drop</button></div></div>`).join('') : empty('checkc', 'All decided', 'Nothing else was removed from its feed.', `<button class="btn" data-act="nav" data-a="inbox">Back to Inbox</button>`)}</div></div>`;
+}
+function pageUpdates() {
+  const ups = [['discoswag', '1 new track \u00b7 title changed', [['Title', '\u201cDisco Swag\u201d \u2192 \u201cDisco Swag \u2013 The Album\u201d'], ['New track', '\u201cEncore (Live)\u201d \u00b7 4:05']]], ['waytogo', 'description \u00b7 5 files to retag', [['Description', 'Updated liner notes'], ['Files', '5 files get the new description tag']]], ['wildflower', 'payment split changed \u00b7 4 files to retag', [['Value split', 'Artist 90% \u2192 85%, producer 0% \u2192 5%'], ['Files', '4 files get the new route tag']]]];
+  if (S.updatesApplied) return `<div class="page">${pageHead('Updates')}${empty('checkc', 'Up to date', 'Every release matches its feed.', `<button class="btn" data-act="nav" data-a="inbox">Back to Inbox</button>`)}</div>`;
+  return `<div class="page">${pageHead('Updates from 3 releases', '1 new track \u00b7 3 changed details \u00b7 9 files to retag', `<button class="btn primary" data-act="applyAll">Apply All</button>`)}
+    <div class="list">${ups.map(([id, sum, diffs]) => { const r = R(id), open = S.expanded.has('u:' + id); return `<div class="row clickable" data-act="toggleGroup" data-a="u:${id}" aria-expanded="${open}" tabindex="0" role="button">${art(r, 'sm')}<div class="r-main"><div class="r-title">${esc(r.title)}</div><div class="r-sub">${sum}</div></div><div class="r-trail"><span class="iconbtn" aria-hidden="true">${ic(open ? 'chevd' : 'chevr')}</span></div></div>${open ? `<div class="diff">${diffs.map(([k, v]) => `<span class="k">${k}</span><span>${esc(v)}</span>`).join('')}</div>` : ''}`; }).join('')}</div></div>`;
+}
+function stageBar() {
+  const order = ['prepare', 'check', 'live', 'wrap'], labels = {prepare: 'Prepare', check: 'Check', live: 'Live', wrap: 'Wrap Up'};
+  let cur = S.show.stage === 'going' ? 'live' : S.show.stage; const ci = order.indexOf(cur);
+  return `<div class="stages" aria-label="Show stage ${ci + 1} of 4: ${labels[cur]}">${order.map((s, i) => `${i ? '<span class="sline" aria-hidden="true"></span>' : ''}<span class="stage ${i < ci ? 'done' : ''} ${i === ci ? 'cur' : ''} ${i === ci && cur === 'live' ? 'live' : ''}"><span class="sd"></span>${s === 'live' && S.show.stage === 'going' ? 'Going Live' : labels[s]}${s === 'live' && S.show.stage === 'live' ? ` <span class="num" data-liveclock>${hms((Date.now() - S.show.liveStart) / 1000)}</span>` : ''}</span>`).join('')}</div>`;
+}
+function nowPlayingBlock(compactTransport) {
+  const t = T(S.play.tid), r = relOfTrack(t), live = S.show.stage === 'live';
+  const i = curIdx(), hasPrev = nextPlayable(i, -1) >= 0, hasNext = nextPlayable(i, 1) >= 0;
+  return `<div class="np">${art(r)}<div style="min-width:0">
+    <p class="sh muted">Now Playing</p><h2 class="t1">${esc(t.title)}</h2>
+    <button class="name-link" data-act="nav" data-a="artist" data-b="${r.artist}">${esc(artistOf(r).name)} \u203a</button>
+    <p class="sh muted">${esc(r.title)} \u00b7 ${r.kind}</p>
+    <div class="scrub"><span data-el>${mmss(S.play.pos)}</span><input type="range" min="0" max="${t.dur}" value="${S.play.pos}" data-pos id="scrub" aria-label="Playback position"><span data-remain>-${mmss(t.dur - S.play.pos)}</span></div>
+    <div class="transport">
+      ${hasPrev ? `<button class="tbtn" data-act="prev"><span class="disc">${ic('prev')}</span>Previous</button>` : ''}
+      <button class="tbtn main" data-act="playPause"><span class="disc">${ic(S.play.paused ? 'play' : 'pause')}</span>${S.play.paused ? 'Play' : 'Pause'}</button>
+      ${hasNext ? `<button class="tbtn" data-act="next"><span class="disc">${ic('next')}</span>Next</button>` : ''}
+      ${live ? '' : `<button class="tbtn" data-act="stop"><span class="disc">${ic('stop')}</span>Stop</button>`}
+    </div></div></div>`;
+}
+function upNext() {
+  const p = PL(S.play.plId), i = curIdx(); const rest = p.tracks.slice(i + 1).map(T);
+  return `<section class="sec"><div class="sec-h"><h2 class="t2">Up Next</h2><span class="fn faint">Double-click to play \u00b7 drag to reorder</span></div>
+    <div class="list" data-pl-list="${p.id}">${rest.length ? rest.map((t, k) => `<div class="row pl clickable" data-tid="${t.id}" data-menu="track:${t.id}" data-drag="${p.id}:${t.id}" data-dblplay="${p.id}:${t.id}" draggable="true" tabindex="0" aria-label="${esc(t.title)}">
+      <span class="handle">${ic('handle')}</span><span class="r-num sh faint num" style="text-align:right">${i + k + 2}</span><div class="r-main"><div class="r-title">${esc(t.title)}</div><div class="r-sub">${esc(artistOf(relOfTrack(t)).name)}</div></div><span class="dur">${mmss(t.dur)}</span><div class="r-trail">${t.state !== 'library' || t.issue ? trackAction(t) : ''}</div></div>`).join('') : '<p class="co muted">That\'s the last track.</p>'}</div></section>`;
+}
+function pageShow() {
+  const sh = S.show, sp = showPl();
+  if (!S.setup.modeChosen) return `<div class="page">${pageHead('Show')}<section class="sec"><h2 class="t2">How do you run your show?</h2>
+    <div class="modecards"><button class="modecard" data-act="chooseMode" data-a="builtin">${ic('play')}<span class="t3">Built-in Player</span><span class="co muted">Play playlists from this app and go live.</span></button>
+    <button class="modecard" data-act="chooseMode" data-a="mixxx">${ic('disc')}<span class="t3">Mixxx</span><span class="co muted">DJ in Mixxx. This app sends now-playing and watches health.</span></button>
+    <button class="modecard" disabled>${ic('rec')}<span class="t3">Record Only</span><span class="co muted">Capture a show to publish later.</span><span class="c1 faint">Coming later</span></button></div>
+    <p class="fn muted">You can change this any time in Settings \u203a Show.</p></section></div>`;
+  if (sh.stage === 'going') {
+    const st = sh.steps;
+    return `<div class="page">${pageHead('Show')}${stageBar()}<section class="sec"><h2 class="t2">Going live\u2026</h2><div>${st.map((s, i) => `<div class="chk"><span class="s ${s.s === 'ok' ? 'ok' : s.s === 'run' ? 'wait' : 'wait'}">${s.s === 'ok' ? ic('checkc') : s.s === 'run' ? '<span class="ring" style="--p:66"></span>' : ic('info')}</span>
+      <div><div class="${s.s === 'wait' ? 'faint' : ''}">${esc(s.t)}</div>${s.needsUser && s.s === 'run' ? feedTagUI() : ''}</div><span class="fn faint num">${s.at || ''}</span></div>`).join('')}</div>
+      <p class="co muted">Nothing is on air until the stream connects.</p><div><button class="btn" data-act="cancelGoing">Cancel</button></div></section></div>`;
+  }
+  if (sh.stage === 'live') return pageLive();
+  if (sh.stage === 'wrap') return pageWrap();
+  const playing = S.play.tid && sh.mode === 'builtin';
+  const ready = readyToLive();
+  const primary = ready ? `<button class="btn live" data-act="goLive">${ic('live')} Go Live\u2026</button>` : `<button class="btn primary" data-act="check">${ic('checkc')} Check Show</button>`;
+  if (playing && S.play.finished) return `<div class="page">${pageHead('Show', 'Playing \u00b7 not live')}${stageBar()}<section class="sec card"><p class="sh muted">Now Playing</p><h2 class="t1">That's the end of ${esc(PL(S.play.plId).name)}</h2><p class="sh muted num">${plural(S.show.played.length, 'track')} played</p><div class="actions"><button class="btn primary" data-act="wrapUp">Wrap Up</button><button class="btn" data-act="playAgain">Play Again from Top</button></div></section></div>`;
+  if (playing) return `<div class="page">${pageHead('Show', `Playing \u00b7 not live`, primary)}${stageBar()}
+    <div class="cols"><section class="sec">${nowPlayingBlock()}<p class="fn muted">Listeners would see: \u201c${esc(T(S.play.tid).title)} \u2014 ${esc(artistOf(relOfTrack(T(S.play.tid))).name)}\u201d \u00b7 not live</p></section>${upNext()}</div></div>`;
+  return `<div class="page">${pageHead('Show')}${stageBar()}
+    ${sh.mode === 'builtin' ? `<section class="sec"><h2 class="t2">Playlist</h2>${sp ? `<div class="row">${mosaic(sp.tracks.map(id => relOfTrack(T(id))), 'sm')}<div class="r-main"><div class="r-title hl">${ic('star')} ${esc(sp.name)}</div><div class="r-sub num">${plural(sp.tracks.length, 'track')} \u00b7 ${Math.round(plDur(sp) / 60)} min${blockers() && sh.checked ? ` \u00b7 ${ic('warn')} ${blockers()} to fix` : ''}</div></div><div class="r-trail"><button class="btn sm" data-act="changePl">Change ${ic('chevd')}</button></div></div>` : `<p class="co muted">Pick a playlist to play.</p><div><button class="btn" data-act="changePl">Choose Playlist ${ic('chevd')}</button></div>`}</section>` : ''}
+    <section class="sec"><h2 class="t2">How You're Running It</h2><div class="inline-row"><div class="seg" role="group" aria-label="Show mode"><button aria-pressed="${sh.mode === 'builtin'}" data-act="chooseMode" data-a="builtin">Built-in Player</button><button aria-pressed="${sh.mode === 'mixxx'}" data-act="chooseMode" data-a="mixxx">Mixxx</button></div><button class="link" data-act="nav" data-a="settings" data-b="show">Set Up \u203a</button></div></section>
+    ${sh.checked ? `<section class="sec"><p class="co ${ready ? '' : 'muted'}">${ready ? `${ic('checkc')} Ready to go live.` : `${plural(blockers(), 'thing')} to fix before going live.`}</p></section>` : ''}
+    <div class="actions">${primary}${ready ? `<button class="btn" data-act="check">${ic('checkc')} Check Again</button>` : ''}${sh.mode === 'builtin' && sp ? `<button class="btn plain" data-act="playPl" data-a="${sp.id}">${ic('play')} Play Without Going Live</button>` : ''}</div></div>`;
+}
+function feedTagUI() {
+  const tag = '<podcast:liveValue uri="https://api.musicindex.org/v1/liveitems/ep42-7f3a" protocol="socket.io"/>';
+  return `<div class="stack" style="margin-top:10px"><p class="co muted">Listeners' apps find the live stream through this line. Paste it inside &lt;channel&gt; in your podcast's RSS feed.</p>
+    <div class="inline-row" style="flex-wrap:nowrap"><div class="code" style="flex:1">${esc(tag)}</div><button class="btn sm" data-act="copyTag">Copy</button></div>
+    <div class="field"><label for="feedurl" class="fn">Your show's feed</label><div class="inline-row"><input id="feedurl" type="text" value="${esc(S.setup.feed || 'https://myshow.example/rss')}" style="flex:1;min-width:0;padding:6px 8px;border:1px solid var(--border-control);border-radius:8px;background:var(--bg-content)"><button class="btn sm primary" data-act="checkFeed">Check My Feed</button></div></div></div>`;
+}
+function pageLive() {
+  const sh = S.show, mixxx = sh.mode === 'mixxx', t = S.play.tid ? T(S.play.tid) : T('discoswag-1'), r = relOfTrack(t);
+  const hp = sh.health.publisher;
+  const health = [
+    ['ok', 'Stream', 'connected \u00b7 audio present'],
+    [hp === 'ok' ? 'ok' : hp === 'restarting' ? 'wait' : 'danger', 'Publisher', hp === 'ok' ? 'sending \u00b7 2 s ago' : hp === 'restarting' ? 'restarting\u2026' : 'stopped sending \u00b7 just now', hp === 'fail' ? `<button class="btn sm" data-act="restartPub">Restart Publisher</button><button class="btn sm plain" data-act="logs">Logs</button>` : ''],
+    ['ok', mixxx ? 'Mixxx producer' : 'Producer', 'active'],
+    ['ok', 'Event', 'Episode 42 \u00b7 live'],
+  ];
+  const healthHTML = `<div class="health">${health.map(([s, n, d, b]) => `<div class="chk"><span class="s ${s}">${s === 'ok' ? ic('checkc') : s === 'wait' ? '<span class="ring" style="--p:50"></span>' : ic('warn')}</span><div><div>${n}</div><div class="d">${d}</div></div><div class="inline-row">${b || ''}</div></div>`).join('')}
+    <div class="chk"><span class="s" style="color:var(--state-live)">${ic('rec')}</span><div><div>Recording</div><div class="d num">${sh.rec ? `<span data-rec>${hms((Date.now() - sh.recStart) / 1000)}</span> \u00b7 episode-42.mp3` : 'off'}</div></div><span></span></div>
+    <div class="chk"><span class="s ok">${ic('people')}</span><div><div>Listeners</div><div class="d num"><span data-listeners>${sh.listeners}</span> now \u00b7 peak ${sh.peak}</div></div><span></span></div></div>`;
+  const listen = `<div class="np">${art(r)}<div style="min-width:0"><p class="sh muted">What listeners see</p><h2 class="t1">${esc(t.title)}</h2><p class="hl">${esc(artistOf(r).name)}</p><p class="sh muted">${mixxx ? 'from Mixxx \u00b7 2 s ago' : `Value: 90% ${esc(artistOf(r).name)} \u00b7 5% show \u00b7 5% app`}</p></div></div>`;
+  return `<div class="page">${pageHead(`Episode 42 \u00b7 <span class="livebadge">LIVE</span>`, '', `<button class="btn danger" data-act="endShow">End Show\u2026</button>`)}${stageBar()}
+    <div class="cols"><section class="sec card">${mixxx ? listen : (S.play.tid && !S.play.finished ? nowPlayingBlock() : `<p class="co muted">The playlist has finished. Listeners see the episode's default details.</p>`)}</section>
+    <section class="sec card"><h2 class="t2">Health</h2>${healthHTML}</section></div>
+    <div class="cols">${!mixxx && S.play.tid && !S.play.finished ? upNext() : '<div></div>'}<section class="sec"><h2 class="t2">Recent</h2><div class="list">${sh.played.slice().reverse().slice(0, 6).map(p => `<div class="row"><span class="fn faint num">${p.time}</span><div class="r-main"><div class="r-title">${esc(p.title)}</div><div class="r-sub">${esc(p.artist)}</div></div><span></span></div>`).join('')}</div></section></div>
+    <p class="proto-note">Prototype: <button class="link fn" data-act="simFail">simulate a publisher failure</button> to see recovery in place (MH7).</p></div>`;
+}
+function pageWrap() {
+  const sh = S.show, dur = (sh.ended - sh.liveStart) / 1000;
+  return `<div class="page">${pageHead('Episode 42 is off air')}${stageBar()}
+    <p class="sh muted num">${new Date(sh.liveStart).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} \u2013 ${new Date(sh.ended).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})} \u00b7 ${hms(dur)} \u00b7 ${plural(sh.played.length, 'track')} \u00b7 peak ${sh.peak} listeners</p>
+    ${sh.rec ? `<section class="sec"><h2 class="t2">Recording</h2><div class="row">${ic('folder')}<div class="r-main"><div class="r-title">episode-42.mp3</div><div class="r-sub">~/Recordings \u00b7 ${Math.max(1, Math.round(dur / 60))} MB</div></div><div class="r-trail"><button class="btn sm" data-act="copyPath">Copy Path</button></div></div></section>` : ''}
+    <section class="sec"><h2 class="t2">What Played</h2><div class="list">${sh.played.map(p => `<div class="row"><span class="fn faint num">${p.time}</span><div class="r-main"><div class="r-title">${esc(p.title)}</div><div class="r-sub">${esc(p.artist)}</div></div><span></span></div>`).join('') || '<p class="co muted">Nothing played from the built-in player.</p>'}</div></section>
+    <p class="co muted">${sh.issues.length ? `Issues during the show: ${esc(sh.issues.join('; '))}.` : 'No issues during the show.'}</p>
+    <div class="actions"><button class="btn primary" data-act="wrapDone">Done</button><button class="btn" disabled>Package Episode (later)</button></div></div>`;
+}
+function pageSettings(sec = 'general') {
+  const tabs = [['general', 'General'], ['library', 'Library'], ['show', 'Show'], ['advanced', 'Advanced']];
+  const theme = store('theme') || 'system', skin = document.documentElement.dataset.skin === 'mi' ? 'mi' : 'structure', ts = store('ts') || 1;
+  const segB = (act, val, cur, label) => `<button aria-pressed="${cur == val}" data-act="${act}" data-a="${val}">${label}</button>`;
+  let body = '';
+  if (sec === 'general') body = `<div class="form">
+    <div class="field"><label>Appearance</label><div class="seg" role="group" aria-label="Appearance">${segB('setTheme', 'system', theme, 'System')}${segB('setTheme', 'light', theme, 'Light')}${segB('setTheme', 'dark', theme, 'Dark')}</div><span class="help">Applies and saves right away.</span></div>
+    <div class="field"><label>Text Size</label><div class="seg" role="group" aria-label="Text size">${segB('setTs', .875, ts, 'Small')}${segB('setTs', 1, ts, 'Default')}${segB('setTs', 1.15, ts, 'Large')}${segB('setTs', 1.3, ts, 'Extra Large')}</div><span class="help">Every text style scales together, like Dynamic Type.</span></div>
+    <div class="field"><label>Skin (prototype)</label><div class="seg" role="group" aria-label="Skin">${segB('setSkin', 'structure', skin, 'Structure')}${segB('setSkin', 'mi', skin, 'MusicIndex')}</div><span class="help">Same layout, different theme tokens. \u201cMusicIndex\u201d borrows musicindex.org's accent, entity colours and artwork treatment.</span></div></div>`;
+  else if (sec === 'library') body = `<div class="form">
+    <div class="field"><label>Music Folder</label><div class="inline-row"><span class="co">~/V4Vmusic</span><button class="btn sm" data-act="loadMore">Move\u2026</button></div><span class="help">Downloads go to Music Folder \u203a artists \u203a artist \u203a release.</span></div>
+    <div class="field"><label for="mi-ep">MusicIndex Server</label><input id="mi-ep" type="text" value="https://api.musicindex.org"><div class="inline-row"><button class="btn sm" data-act="testIt" data-a="mi">Test</button><span class="fn muted" id="test-mi"></span></div></div>
+    <div class="field"><label>WAV Converter</label><div class="inline-row"><span class="badge warn">${ic('warn')} flac not found</span><button class="btn sm" data-act="loadMore">How to Install</button></div><span class="help">Only needed for the few releases that ship WAV files.</span></div>
+    <div class="field"><label>Automatic Update Checks</label><div class="seg" role="group">${segB('noop', 'on', 'on', 'Every 6 Hours')}${segB('noop', 'off', 'on', 'Off')}</div><span class="help">Results go to the Inbox.</span></div></div>`;
+  else if (sec === 'show') {
+    const open = S.setupOpen;
+    const item = (s, title, d, btn, key, form) => `<div class="chk"><span class="s ${s}">${s === 'ok' ? ic('checkc') : s === 'warn' ? ic('warn') : ic('info')}</span><div><div>${title}</div><div class="d">${d}</div></div><div>${btn ? `<button class="btn sm" data-act="setupToggle" data-a="${key}">${btn}</button>` : ''}</div></div>${open === key && form ? `<div class="card" style="margin:8px 0 12px">${form}</div>` : ''}`;
+    const encForm = `<div class="form"><h3 class="t3">Stream Encoder</h3>
+      <div class="field"><label for="butt-path">butt Location</label><div class="inline-row"><input id="butt-path" type="text" value="/usr/bin/butt" style="flex:1"><button class="btn sm" data-act="loadMore">Choose\u2026</button></div><span class="help">Found automatically. Change it only if you use a different build.</span></div>
+      <div class="field"><label for="butt-server">Server</label><input id="butt-server" type="text" value="radio.example:8000"></div>
+      <div class="inline-row"><button class="btn sm" data-act="testIt" data-a="enc">Test</button><span class="fn muted" id="test-enc"></span><span style="flex:1"></span><button class="btn sm plain" data-act="setupToggle" data-a="">Cancel</button><button class="btn sm primary" data-act="saveEncoder">Save</button></div></div>`;
+    const feedForm = `<div class="form"><h3 class="t3">Your Show's Feed</h3><div class="field"><label for="feed-in">Feed URL</label><input id="feed-in" type="text" placeholder="https://myshow.example/rss" value="${esc(S.setup.feed)}"><span class="help">Used once, to check that the live tag is in your feed.</span></div><div class="inline-row"><span style="flex:1"></span><button class="btn sm plain" data-act="setupToggle" data-a="">Cancel</button><button class="btn sm primary" data-act="saveFeed">Save</button></div></div>`;
+    body = `<p class="sh muted">${S.show.mode === 'builtin' ? 'Built-in Player' : 'Mixxx'} \u00b7 going live</p><div style="max-width:720px">
+      ${S.show.mode === 'builtin' ? item('ok', 'Audio player', 'mpv \u00b7 sound on', 'Change', 'audio') : item('ok', 'Mixxx producer', 'mixxx-now-playing \u00b7 active', 'Change', 'mixxx')}
+      ${item('ok', 'Publisher', 'studio.local \u00b7 active', 'Change', 'pub')}
+      ${item(S.setup.encoder ? 'ok' : 'warn', 'Stream encoder', S.setup.encoder ? 'butt \u00b7 radio.example:8000' : "butt isn't set up", S.setup.encoder ? 'Change' : 'Set Up', 'encoder', encForm)}
+      ${item('wait', 'Live event', 'created or reused when you go live', '', '')}
+      ${item(S.setup.feed ? 'ok' : 'wait', "Your show's feed", S.setup.feed || 'needed once to check the live tag', S.setup.feed ? 'Change' : 'Add', 'feed', feedForm)}
+      <p class="co muted" style="margin-top:12px">You can play without these. Going live needs them.</p></div>`;
+  } else body = `<div style="max-width:720px">
+    <div class="chk"><span class="s ok">${ic('checkc')}</span><div><div>Background services</div><div class="d">All running</div></div><span></span></div>
+    <div class="chk"><span class="s ok">${ic('checkc')}</span><div><div>Database</div><div class="d">Checked today \u00b7 14 MB</div></div><div class="inline-row"><button class="btn sm" data-act="backup">Back Up</button><button class="btn sm" data-act="loadMore">Restore\u2026</button></div></div>
+    <div class="chk"><span class="s wait">${ic('info')}</span><div><div>Config file</div><div class="d">~/.config/v4vmm/config.toml</div></div><button class="btn sm" data-act="loadMore">Show Config File</button></div>
+    <div class="chk"><span class="s wait">${ic('info')}</span><div><div>Welcome screen</div><div class="d">See first-launch checks again</div></div><button class="btn sm" data-act="showWelcome">Show Welcome</button></div></div>`;
+  return `<div class="page">${pageHead('Settings')}<div class="seg" role="tablist" aria-label="Settings sections">${tabs.map(([id, l]) => `<button role="tab" aria-pressed="${sec === id}" aria-selected="${sec === id}" data-act="nav" data-a="settings" data-b="${id}">${l}</button>`).join('')}</div>${body}
+    <p class="proto-note">Prototype with sample data. Nothing here changes real files.</p></div>`;
+}
+function renderPage() {
+  const r = S.route;
+  switch (r.n) {
+    case 'discover': return pageDiscover(); case 'search': return pageSearch(false); case 'saved': return pageSearch(true);
+    case 'release': return pageRelease(r.id); case 'artist': return pageArtist(r.id); case 'lib': return pageLib(r.id);
+    case 'playlists': return pagePlaylists(); case 'playlist': return pagePlaylist(r.id); case 'inbox': return pageInbox();
+    case 'group': return pageGroup(r.id); case 'updates': return pageUpdates(); case 'show': return pageShow(); case 'settings': return pageSettings(r.id);
+  }
+  return '';
+}
+
+/* ---------- chrome ---------- */
+function sideItem(icon, label, n, id, cur, extra = '') {
+  return `<button class="side-i" data-act="nav" data-a="${n}" ${id ? `data-b="${id}"` : ''} ${cur ? 'aria-current="page"' : ''} ${extra}>${ic(icon)}<span class="lbl">${label}</span></button>`;
+}
+function renderSidebar() {
+  const r = S.route, inbox = inboxItems().length, live = S.show.stage === 'live';
+  const pls = S.playlists.map(p => `<button class="side-i" data-act="nav" data-a="playlist" data-b="${p.id}" data-drop-pl="${p.id}" ${r.n === 'playlist' && r.id === p.id ? 'aria-current="page"' : ''}>${ic(p.id === S.showPl ? 'star' : 'list')}<span class="lbl">${esc(p.name)}</span><span class="count">${p.tracks.length}</span></button>`).join('');
+  const np = S.newPl ? `<div class="side-new"><input type="text" id="side-np" placeholder="Playlist name" aria-label="New playlist name"><label><input type="checkbox" id="side-np-pin" checked> Make it the show playlist</label><span class="fn faint">Return to create \u00b7 Esc to cancel</span></div>` : `<button class="side-i" data-act="newPl">${ic('plus')}<span class="lbl muted">New Playlist</span></button>`;
+  return `<div class="side-h">Discover</div>
+    ${sideItem('compass', 'New Releases', 'discover', '', r.n === 'discover')}
+    <button class="side-i" data-act="nav" data-a="saved" ${r.n === 'saved' ? 'aria-current="page"' : ''}>${ic('search')}<span class="lbl">doerfel</span>${!S.savedSeen ? `<span class="count hot">${S.savedNew}</span>` : ''}</button>
+    <div class="side-h">Library</div>
+    ${sideItem('disc', 'Releases', 'lib', 'releases', r.n === 'lib' && r.id === 'releases')}
+    ${sideItem('person', 'Artists', 'lib', 'artists', r.n === 'lib' && r.id === 'artists')}
+    ${sideItem('note', 'Tracks', 'lib', 'tracks', r.n === 'lib' && r.id === 'tracks')}
+    <div class="side-h">Playlists</div>${pls}${np}
+    <div class="side-h">Show</div>
+    <button class="side-i" data-act="nav" data-a="show" ${r.n === 'show' ? 'aria-current="page"' : ''}>${ic('mic')}<span class="lbl">Show</span>${live ? '<span class="livebadge">LIVE</span>' : S.play.tid ? '<span class="c1 muted">Playing</span>' : ''}</button>
+    <div class="side-sep"></div>
+    <button class="side-i" data-act="nav" data-a="inbox" ${['inbox', 'group', 'updates'].includes(r.n) ? 'aria-current="page"' : ''}>${ic('inbox')}<span class="lbl">Inbox</span>${inbox ? `<span class="count hot">${inbox}</span>` : ''}</button>
+    ${sideItem('gear', 'Settings', 'settings', 'general', r.n === 'settings')}
+    <div class="side-foot">Prototype \u00b7 sample data</div>`;
+}
+function renderToolbarOnce() {
+  $('#toolbar').innerHTML = `<button class="iconbtn" data-act="toggleSidebar" aria-label="Show or hide sidebar" title="Sidebar" id="tb-side">${ic('sidebar')}</button>
+    <button class="iconbtn" id="tb-back" data-act="back" aria-label="Back" title="Back">${ic('chevl')}</button><button class="iconbtn" id="tb-fwd" data-act="fwd" aria-label="Forward" title="Forward">${ic('chevr')}</button>
+    <div class="tb-title hl" id="tb-title"></div>
+    <div class="tb-search">${ic('search')}<input id="q" type="search" placeholder="Search music and actions" autocomplete="off" aria-label="Search music and actions"><button class="kbd-btn" data-act="palette" title="Command palette (${K('\u2318K')})" aria-label="Open command palette">${K('\u2318K')}</button></div>
+    <button class="iconbtn" id="tb-activity" data-act="activity" aria-label="Activity" title="Activity"></button>
+    <button class="iconbtn wide-only" id="tb-insp" data-act="toggleInspector" aria-label="Show or hide inspector" title="Inspector (${K('\u2325\u2318I')})">${ic('inspector')}</button>`;
+  $('#tabbar').innerHTML = [['discover', 'compass', 'Discover'], ['library', 'stack', 'Library'], ['show', 'mic', 'Show'], ['search', 'search', 'Search']].map(([id, i, l]) => `<button class="tab" data-act="tab" data-a="${id}" id="tab-${id}">${ic(i)}<span>${l}</span></button>`).join('');
+  const q = $('#q');
+  q.addEventListener('input', () => { S.q = q.value; S.pop = q.value ? 'search' : null; renderOverlay(); });
+  q.addEventListener('focus', () => { if (q.value) { S.pop = 'search'; renderOverlay(); } });
+  q.addEventListener('keydown', e => { if (e.key === 'Enter') { S.q = q.value; S.searchSeg = 'top'; S.pop = null; renderOverlay(); if (S.q.trim()) nav('search'); q.blur(); } if (e.key === 'Escape') { S.pop = null; renderOverlay(); q.blur(); } if (e.key === 'ArrowDown') { e.preventDefault(); $('#overlay .sugg')?.focus(); } });
+}
+function renderActivityBtn() {
+  const n = DL.active.length + DL.queue.length, b = $('#tb-activity');
+  if (!b) return;
+  b.innerHTML = n ? `<span class="ring" style="--p:${DL.total ? Math.round((DL.done + DL.active.reduce((a, id) => a + T(id).progress / 100, 0)) / DL.total * 100) : 0}"></span><span class="pip">${n}</span>` : ic('download');
+  b.setAttribute('aria-label', n ? `Activity: getting ${n}` : 'Activity');
+}
+function renderChrome() {
+  $('#tb-title').textContent = routeTitle();
+  $('#tb-back').disabled = !S.back.length; $('#tb-fwd').disabled = !S.fwd.length;
+  $('#tb-insp').setAttribute('aria-pressed', S.inspector);
+  renderActivityBtn();
+  const inbox = inboxItems().length, detail = !['discover', 'lib', 'playlists', 'show', 'search'].includes(S.route.n);
+  $('#navbar').innerHTML = `${detail && S.back.length ? `<button class="btn plain" data-act="back" style="padding:0 6px">${ic('chevl')} Back</button>` : ''}<span style="flex:1"></span>
+    <button class="btn plain" data-act="nav" data-a="inbox" aria-label="Inbox, ${inbox} items">${ic('inbox')} Inbox${inbox ? ` <span class="count hot">${inbox}</span>` : ''}</button>
+    <button class="iconbtn" data-act="moreMenu" aria-label="More" title="More">${ic('more')}</button>`;
+  ['discover', 'library', 'show', 'search'].forEach(t => $('#tab-' + t).toggleAttribute('aria-current', false));
+  const tabEl = $('#tab-' + S.tab); if (tabEl) tabEl.setAttribute('aria-current', 'page');
+  $('#sidebar').classList.toggle('open', S.sidebarOpen);
+  $('#sidescrim').hidden = !(S.sidebarOpen && !isWide());
+}
+function renderInspector() {
+  const el = $('#inspector'); el.hidden = !S.inspector;
+  if (!S.inspector) return;
+  const r = S.route;
+  if (r.n === 'release') {
+    const rel = R(r.id), t = S.inspTrack && T(S.inspTrack)?.rid === rel.id ? T(S.inspTrack) : null;
+    el.innerHTML = `<div class="stack"><div class="inline-row"><h2 class="t3" style="flex:1">Details</h2><button class="iconbtn" data-act="toggleInspector" aria-label="Close inspector">${ic('close')}</button></div>
+      <p class="sh muted">${t ? `Track \u00b7 ${esc(t.title)}` : `Release \u00b7 ${esc(rel.title)}`}</p>
+      <div class="field"><label class="fn muted">Feed</label><span class="co" style="word-break:break-all">https://feeds.example/${rel.id}.xml</span></div>
+      <div class="field"><label class="fn muted">Publisher</label><span class="co">${esc(artistOf(rel).name)}${artistOf(rel).confirmed ? ' \u00b7 confirmed artist' : ' \u00b7 name only'}</span></div>
+      <div class="field"><label class="fn muted">Payment routes</label><span class="co">${esc(artistOf(rel).name)} 90% \u00b7 show host 5% \u00b7 app 5%</span></div>
+      <div class="field"><label class="fn muted">Sources</label>
+        <div class="chk"><span class="s ok">${ic('checkc')}</span><div><div>RSS feed</div><div class="d">checked today</div></div><span></span></div>
+        <div class="chk"><span class="s ok">${ic('checkc')}</span><div><div>MusicIndex</div><div class="d">copy of the RSS, up to date</div></div><span></span></div>
+        <div class="chk"><span class="s ${ownedRel(rel) ? 'ok' : 'wait'}">${ownedRel(rel) ? ic('checkc') : ic('info')}</span><div><div>File tags</div><div class="d">${ownedRel(rel) ? 'match the feed' : 'not downloaded'}</div></div><span></span></div></div>
+      <button class="btn sm" data-act="loadMore">Look Up on MusicBrainz</button></div>`;
+  } else if (S.play.tid) {
+    el.innerHTML = `<div class="stack"><div class="inline-row"><h2 class="t3" style="flex:1">Up Next</h2><button class="iconbtn" data-act="toggleInspector" aria-label="Close inspector">${ic('close')}</button></div>${PL(S.play.plId).tracks.slice(curIdx() + 1).map(id => `<div class="row" style="min-height:44px">${art(relOfTrack(T(id)), 'xs')}<div class="r-main"><div class="sh">${esc(T(id).title)}</div><div class="r-sub fn">${esc(artistOf(relOfTrack(T(id))).name)}</div></div><span class="dur fn">${mmss(T(id).dur)}</span></div>`).join('') || '<p class="co muted">That\'s the last track.</p>'}</div>`;
+  } else el.innerHTML = `<div class="stack"><div class="inline-row"><h2 class="t3" style="flex:1">Details</h2><button class="iconbtn" data-act="toggleInspector" aria-label="Close inspector">${ic('close')}</button></div><p class="co muted">Open a release to see where its details come from: feed, publisher, payment routes and file tags.</p></div>`;
+}
+function renderAccessory() {
+  const el = $('#accessory'); const live = S.show.stage === 'live';
+  const show = (S.play.tid && !S.play.finished) || live;
+  el.hidden = !show; document.body.classList.toggle('has-acc', !!show);
+  if (!show) return;
+  const t = S.play.tid && !S.play.finished ? T(S.play.tid) : null;
+  const i = t ? curIdx() : -1;
+  el.innerHTML = `${t ? art(relOfTrack(t), 'xs') : ''}<div class="acc-title">${t ? `<b>${esc(t.title)}</b> \u2014 ${esc(artistOf(relOfTrack(t)).name)}` : 'Episode 42'}</div>
+    ${live ? `<span class="livebadge">LIVE <span class="num" data-liveclock>${hms((Date.now() - S.show.liveStart) / 1000)}</span></span>` : '<span class="c1 muted not-compact">Playing</span>'}
+    ${t ? `<span class="c1 muted num not-compact"><span data-el>${mmss(S.play.pos)}</span> / ${mmss(t.dur)}</span>` : ''}
+    ${t && nextPlayable(i, -1) >= 0 ? `<button class="iconbtn not-compact" data-act="prev" aria-label="Previous track" title="Previous">${ic('prev')}</button>` : ''}
+    ${t ? `<button class="iconbtn" data-act="playPause" aria-label="${S.play.paused ? 'Play' : 'Pause'}" title="${S.play.paused ? 'Play' : 'Pause'} (Space)">${ic(S.play.paused ? 'play' : 'pause')}</button>` : ''}
+    ${t && nextPlayable(i, 1) >= 0 ? `<button class="iconbtn not-compact" data-act="next" aria-label="Next track" title="Next">${ic('next')}</button>` : ''}
+    <button class="btn sm" data-act="nav" data-a="show">Open Show</button>`;
+}
+function renderOverlay() {
+  const o = $('#overlay'); let h = '';
+  if (S.pop === 'search' && S.q && !isCompact()) {
+    const d = searchData(S.q), box = $('.tb-search').getBoundingClientRect();
+    const music = d ? [...d.artists.slice(0, 2).map(id => ({ref: 'artist:' + id, label: ARTISTS[id].name, sub: 'Artist', r: REL.find(r => r.artist === id)})), ...d.releases.slice(0, 3).map(r => ({ref: 'release:' + r.id, label: r.title, sub: `${artistOf(r).name} \u00b7 ${r.kind}`, r})), ...d.tracks.slice(0, 3).map(t => ({ref: 'track:' + t.id, label: t.title, sub: `Track \u00b7 ${artistOf(relOfTrack(t)).name}`, r: relOfTrack(t)}))] : [];
+    h += `<div class="popover" style="top:${box.bottom + 6}px;left:${Math.max(8, box.right - 380)}px" role="listbox" aria-label="Suggestions">
+      ${d && d.actions.length ? `<div class="ph">Actions</div>${d.actions.slice(0, 4).map(c => `<button class="sugg" data-act="cmd" data-a="${COMMANDS.indexOf(c)}">${ic(c.icon || 'chevr')} ${esc(c.label)}${c.k ? `<kbd class="k">${K(c.k)}</kbd>` : ''}</button>`).join('')}` : ''}
+      ${music.length ? `<div class="ph">Music</div>${music.map(m => `<button class="sugg" data-act="openSugg" data-a="${m.ref}">${art(m.r, 'xs' + (m.ref.startsWith('artist') ? ' round' : ''))}<span style="min-width:0"><span style="display:block">${esc(m.label)}</span><span class="fn muted">${esc(m.sub)}</span></span></button>`).join('')}` : ''}
+      <button class="sugg" data-act="searchGo">${ic('search')} Search \u201c${esc(S.q)}\u201d in music<kbd class="k">\u23ce</kbd></button></div>`;
+  }
+  if (S.pop === 'activity') {
+    const b = $('#tb-activity').getBoundingClientRect(), n = DL.active.length + DL.queue.length;
+    h += `<div class="popover" style="top:${b.bottom + 6}px;left:${Math.max(8, b.right - 380)}px" role="dialog" aria-label="Activity"><div class="inline-row"><h2 class="t3" style="flex:1">Activity</h2>${n ? '<button class="btn sm" data-act="stopAll">Stop Queued</button>' : ''}</div>
+      ${n ? `<p class="hl" style="margin-top:8px">Getting ${DL.done + DL.active.length} of ${DL.total}</p>${[...DL.active, ...DL.queue].map(id => `<div class="row" style="min-height:44px">${art(relOfTrack(T(id)), 'xs')}<div class="r-main"><div class="sh">${esc(T(id).title)}</div><div class="r-sub fn">${esc(artistOf(relOfTrack(T(id))).name)}</div></div><span class="c1 muted num">${T(id).state === 'getting' ? Math.round(T(id).progress) + '%' : 'queued'}</span></div>`).join('')}` : '<p class="co muted" style="margin:8px 0">Nothing running.</p>'}
+      <div class="ph">Earlier</div>${S.log.slice(0, 6).map(l => `<div class="row" style="min-height:40px"><span class="badge ${l.retry ? 'danger' : 'ok'}">${ic(l.retry ? 'warn' : 'check')}</span><div class="r-main"><div class="sh">${esc(l.text)}</div></div><span class="fn faint num">${l.t}</span></div>`).join('')}</div>`;
+  }
+  if (S.menu) {
+    h += `<div class="menu" role="menu" style="top:${S.menu.y}px;left:${S.menu.x}px" id="menu">${S.menu.items.map((it, i) => it === '-' ? '<hr>' : `<button role="menuitem" class="${it.danger ? 'danger' : ''}" data-act="menuPick" data-a="${i}">${it.icon ? ic(it.icon) : '<span style="width:1.15em"></span>'}${esc(it.label)}${it.sub ? `<span class="k">${ic('chevr')}</span>` : it.k ? `<span class="k">${K(it.k)}</span>` : ''}</button>`).join('')}</div>`;
+  }
+  if (S.sheet) h += renderSheet();
+  if (S.welcome) h += renderWelcome();
+  o.innerHTML = h;
+  if (S.menu) { const m = $('#menu'); if (m && !isCompact()) { const rc = m.getBoundingClientRect(); if (rc.right > innerWidth - 8) m.style.left = Math.max(8, innerWidth - rc.width - 8) + 'px'; if (rc.bottom > innerHeight - 8) m.style.top = Math.max(8, innerHeight - rc.height - 8) + 'px'; } }
+}
+function renderSheet() {
+  const s = S.sheet;
+  if (s.kind === 'confirm') return `<div class="scrim" data-act="sheetBg"><div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="sh-t"><h2 class="t3" id="sh-t">${esc(s.title)}</h2>${s.body}<div class="foot"><button class="btn" data-act="sheetCancel">Cancel</button><button class="btn primary ${s.danger ? 'danger' : ''}" id="sheet-ok" data-act="sheetOk">${esc(s.ok)}</button></div></div></div>`;
+  if (s.kind === 'newpl') return `<div class="scrim" data-act="sheetBg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t"><div class="inline-row"><button class="btn plain" data-act="sheetCancel">Cancel</button><h2 class="t3" id="sh-t" style="flex:1;text-align:center">New Playlist</h2><button class="btn plain" data-act="npCreate">Create</button></div>
+    <div class="field"><input type="text" id="np-name" placeholder="Playlist name" aria-label="Playlist name"></div><label class="inline-row co"><input type="checkbox" id="np-pin" checked class="cbx"> Show playlist</label><p class="fn muted">Every track gets a one-tap add button while this is on.</p></div></div>`;
+  if (s.kind === 'check') {
+    const rows = checkRows(), groups = [...new Set(rows.map(r => r.g))], done = s.revealed >= rows.length, b = rows.filter(r => r.s !== 'ok').length;
+    let k = 0;
+    return `<div class="scrim" data-act="sheetBg"><div class="sheet full" role="dialog" aria-modal="true" aria-labelledby="sh-t" style="width:min(620px,100%)">
+      <div class="inline-row"><h2 class="t3" id="sh-t" style="flex:1">Check Show \u00b7 ${esc(showPl()?.name || 'no playlist')}</h2><button class="btn plain" data-act="sheetCancel">Done</button></div>
+      <p class="sh muted">${S.show.mode === 'builtin' ? 'Built-in Player' : 'Mixxx'} \u00b7 going live</p>
+      ${groups.map(g => `<div><h3 class="hl" style="margin-top:6px">${g}</h3>${rows.filter(r => r.g === g).map(r => { const i = k++, shown = i < s.revealed; return `<div class="chk"><span class="s ${shown ? r.s : 'wait'}">${shown ? ic(r.s === 'ok' ? 'checkc' : 'warn') : '<span class="ring" style="--p:30"></span>'}</span><div>${shown ? `<div>${esc(r.title)}</div>${r.d ? `<div class="d">${esc(r.d)}</div>` : ''}` : `<span class="skel" style="width:60%"></span>`}</div><div>${shown && r.btn ? `<button class="btn sm" data-act="checkFix" data-a="${i}">${r.btn}</button>` : ''}</div></div>`; }).join('')}</div>`).join('')}
+      <div class="foot">${done ? (b ? `<span class="co grow">${plural(b, 'thing')} to fix before going live.</span><button class="btn" data-act="check">${ic('retry')} Check Again</button>${S.show.mode === 'builtin' && showPl() ? `<button class="btn primary" data-act="playPlSheet">${ic('play')} Play Without Going Live</button>` : ''}` : `<span class="co grow">${ic('checkc')} Ready to go live.</span><button class="btn live" data-act="goLive">${ic('live')} Go Live\u2026</button>`) : '<span class="co grow muted">Checking\u2026</span>'}</div></div></div>`;
+  }
+  if (s.kind === 'golive') {
+    const builtin = S.show.mode === 'builtin';
+    return `<div class="scrim" data-act="sheetBg"><div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="sh-t"><h2 class="t3" id="sh-t">Go Live?</h2><p class="co">You'll be on air. The app will:</p>
+      <ol class="co"><li>Use event <b>Episode 42</b> (live)</li><li>Attach it to the publisher on studio.local</li><li>Start the ${builtin ? 'now-playing producer' : 'Mixxx producer'}</li><li>Connect the stream to radio.example:8000</li>${builtin && !S.play.tid ? `<li>Play <b>${esc(showPl().name)}</b> from the top</li>` : ''}</ol>
+      <label class="inline-row co"><input type="checkbox" class="cbx" id="rec-opt" ${S.show.recOpt ? 'checked' : ''}> Start recording</label>
+      <div class="foot"><button class="btn" data-act="sheetCancel">Cancel</button><button class="btn live" id="sheet-ok" data-act="goLiveConfirm">${ic('live')} Go Live</button></div></div></div>`;
+  }
+  if (s.kind === 'endshow') return `<div class="scrim" data-act="sheetBg"><div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="sh-t"><h2 class="t3" id="sh-t">End the Show?</h2><p class="co">Listeners will lose the stream.</p>
+      <ul class="co" style="margin:0;padding-left:1.2em"><li>Disconnect the stream</li><li>Stop playback</li>${S.show.rec ? '<li>Stop recording</li>' : ''}</ul>
+      <label class="inline-row co"><input type="checkbox" class="cbx" id="stop-svc"> Also stop the publisher and producer</label>
+      <div class="foot"><button class="btn" data-act="sheetCancel">Cancel</button><button class="btn primary danger" id="sheet-ok" data-act="endConfirm">End Show</button></div></div></div>`;
+  if (s.kind === 'pauselive') return `<div class="scrim" data-act="sheetBg"><div class="sheet" role="alertdialog" aria-modal="true" aria-labelledby="sh-t"><h2 class="t3" id="sh-t">Pause While Live?</h2><p class="co">Pausing clears what listeners see until you play again.</p><div class="foot"><button class="btn" data-act="sheetCancel">Cancel</button><button class="btn primary" id="sheet-ok" data-act="pauseConfirm">Pause</button></div></div></div>`;
+  if (s.kind === 'logs') return `<div class="scrim" data-act="sheetBg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t"><div class="inline-row"><h2 class="t3" id="sh-t" style="flex:1">Publisher</h2><button class="iconbtn" data-act="sheetCancel" aria-label="Close">${ic('close')}</button></div>
+      <p class="fn muted">musicindex-live-publisher@mixxx \u00b7 failed since ${clock()}</p><h3 class="hl">What happened</h3><p class="co">The service exited after the target changed, so listeners stopped getting song updates.</p>
+      <h3 class="hl">Log</h3><div class="code" style="white-space:pre;line-height:1.6">${clock()}:03 target add ok\n${clock()}:04 restart\n${clock()}:05 error: token not found</div>
+      <div class="foot"><button class="btn" data-act="copyReport">Copy Report</button><button class="btn primary" data-act="restartPub">Restart Publisher</button></div></div></div>`;
+  return '';
+}
+function renderWelcome() {
+  const st = S.welcomeStep;
+  const rows = [['ok', 'Music folder', '~/V4Vmusic (created)', 'Change'], ['ok', 'MusicIndex', 'reached api.musicindex.org', ''], ['ok', 'Audio player', 'mpv found \u00b7 sound is on', ''], ['warn', 'WAV converter', 'flac not found \u00b7 only needed for the few releases that ship WAV files', 'How to Install']];
+  return `<div class="welcome" role="dialog" aria-modal="true" aria-labelledby="wl-t"><div class="inner">
+    <div class="mark">${ic('note')}</div><h1 class="lt" id="wl-t">Welcome to V4V Music Manager</h1><p class="co muted">Find Value4Value music, keep it ready, and run your show.</p>
+    <div>${rows.map((r, i) => `<div class="chk"><span class="s ${i < st ? r[0] : 'wait'}">${i < st ? ic(r[0] === 'ok' ? 'checkc' : 'warn') : '<span class="ring" style="--p:30"></span>'}</span><div>${i < st ? `<div>${r[1]}</div><div class="d">${r[2]}</div>` : `<div>${r[1]}</div><span class="skel" style="width:50%"></span>`}</div><div>${i < st && r[3] ? `<button class="btn sm" data-act="loadMore">${r[3]}</button>` : ''}</div></div>`).join('')}</div>
+    <div class="inline-row" style="justify-content:space-between"><span class="proto-note">Prototype \u00b7 sample data</span><button class="btn primary" data-act="welcomeDone" ${st < rows.length ? 'disabled' : ''} id="wl-go">Continue</button></div></div></div>`;
+}
+function render() {
+  const m = $('#main'), key = JSON.stringify(S.route), st = S.key === key ? m.scrollTop : 0;
+  $('#sidebar').innerHTML = renderSidebar();
+  m.innerHTML = renderPage();
+  if (S.key === key) m.scrollTop = st;
+  S.key = key;
+  renderChrome(); renderInspector(); renderAccessory(); renderOverlay();
+  if (S.focus) { const f = $(S.focus); S.focus = null; if (f) { f.focus(); if (f.select) f.select(); } }
+}
+
+/* ---------- commands (search + \u2318K) ---------- */
+const COMMANDS = [
+  {label: 'New Playlist', k: '\u2318N', icon: 'plus', run: () => newPlaylist()},
+  {label: 'Check Show', k: '\u21e7\u2318C', icon: 'checkc', run: () => openCheck()},
+  {label: 'Go Live\u2026', icon: 'live', run: () => openGoLive(), when: () => S.show.stage !== 'live'},
+  {label: 'End Show\u2026', icon: 'stop', run: () => ACT.endShow(), when: () => S.show.stage === 'live'},
+  {label: 'Play / Pause', k: 'Space', icon: 'play', run: () => ACT.playPause(), when: () => !!S.play.tid},
+  {label: 'Next Track', k: '\u2318\u2192', icon: 'next', run: () => skip(1), when: () => !!S.play.tid},
+  {label: 'Stop', k: '\u2318.', icon: 'stop', run: () => stopPlayback(), when: () => !!S.play.tid && S.show.stage !== 'live'},
+  {label: 'Go to Discover', icon: 'compass', run: () => nav('discover')},
+  {label: 'Go to Releases', icon: 'disc', run: () => nav('lib', 'releases')},
+  {label: 'Go to Inbox', icon: 'inbox', run: () => nav('inbox')},
+  {label: 'Go to Show', icon: 'mic', run: () => nav('show')},
+  {label: 'Show Dropped Releases', icon: 'disc', run: () => { S.libFilter = 'dropped'; nav('lib', 'releases'); }},
+  {label: 'Show Activity', icon: 'download', run: () => ACT.activity()},
+  {label: 'Toggle Inspector', k: '\u2325\u2318I', icon: 'inspector', run: () => ACT.toggleInspector()},
+  {label: 'Settings', k: '\u2318,', icon: 'gear', run: () => nav('settings', 'general')},
+  {label: 'Switch Skin', icon: 'gear', run: () => ACT.setSkin(document.documentElement.dataset.skin === 'mi' ? 'structure' : 'mi')},
+];
+
+/* ---------- command palette ---------- */
+function paletteItems(raw) {
+  const q = raw.trim().toLowerCase(), cmdOnly = q.startsWith('>'), qq = cmdOnly ? q.slice(1).trim() : q, items = [];
+  COMMANDS.filter(c => (!c.when || c.when()) && c.label.toLowerCase().includes(qq)).forEach(c => items.push({g: 'Actions', label: c.label, icon: c.icon, k: c.k, run: c.run}));
+  if (qq && !cmdOnly) {
+    const d = searchData(qq);
+    d.artists.slice(0, 3).forEach(id => items.push({g: 'Music', label: ARTISTS[id].name, sub: 'Artist', art: REL.find(r => r.artist === id), round: true, run: () => nav('artist', id)}));
+    d.releases.slice(0, 4).forEach(r => items.push({g: 'Music', label: r.title, sub: artistOf(r).name + ' \u00b7 ' + r.kind, art: r, run: () => nav('release', r.id)}));
+    d.tracks.slice(0, 4).forEach(t => items.push({g: 'Music', label: t.title, sub: 'Track \u00b7 ' + artistOf(relOfTrack(t)).name, art: relOfTrack(t), run: () => openRef('track:' + t.id)}));
+    items.push({g: 'Search', label: 'Search \u201c' + raw.trim() + '\u201d in music', icon: 'search', run: () => { S.q = raw.trim(); $('#q').value = S.q; S.searchSeg = 'top'; nav('search'); }});
+  }
+  return items;
+}
+function openPalette() {
+  if ($('#palette').innerHTML) { closePalette(); return; }
+  S.menu = null; S.pop = null; renderOverlay();
+  S.pal = {q: '', idx: 0, ret: document.activeElement};
+  $('#palette').innerHTML = `<div class="pal-scrim" id="pal-scrim"><div class="pal" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="pal-in">${ic('search')}<input id="pal-q" type="text" placeholder="Type an action, or search music" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="pal-list" aria-autocomplete="list"><kbd>esc</kbd></div>
+    <div id="pal-list" role="listbox" aria-label="Actions and music"></div>
+    <div class="pal-foot fn faint">&uarr; &darr; to move &middot; Return to run &middot; ${K('\u2318K')} or / opens this anywhere &middot; start with &gt; for actions only</div></div></div>`;
+  const inp = $('#pal-q');
+  inp.addEventListener('input', () => { S.pal.q = inp.value; S.pal.idx = 0; updatePalette(); });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); movePal(1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); movePal(-1); }
+    else if (e.key === 'Enter') { e.preventDefault(); runPal(S.pal.idx); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closePalette(); }
+  });
+  $('#pal-scrim').addEventListener('mousedown', e => { if (e.target.id === 'pal-scrim') closePalette(); });
+  $('#pal-list').addEventListener('click', e => { const el = e.target.closest('[data-pal]'); if (el) runPal(+el.dataset.pal); });
+  $('#pal-list').addEventListener('mousemove', e => { const el = e.target.closest('[data-pal]'); if (el && +el.dataset.pal !== S.pal.idx) { S.pal.idx = +el.dataset.pal; markPal(); } });
+  updatePalette(); inp.focus();
+}
+function updatePalette() {
+  const items = S.palItems = paletteItems(S.pal.q); let g = null;
+  $('#pal-list').innerHTML = items.length ? items.map((it, i) => `${it.g !== g ? `<div class="ph">${esc(g = it.g)}</div>` : ''}<div class="sugg pal-item" role="option" id="pal-${i}" data-pal="${i}" aria-selected="${i === S.pal.idx}">${it.art ? art(it.art, 'xs' + (it.round ? ' round' : '')) : ic(it.icon || 'chevr')}<span style="min-width:0;flex:1"><span style="display:block">${esc(it.label)}</span>${it.sub ? `<span class="fn muted">${esc(it.sub)}</span>` : ''}</span>${it.k ? `<kbd class="k">${K(it.k)}</kbd>` : ''}</div>`).join('') : '<p class="co muted" style="padding:12px">No matches. Try a release, an artist, or an action like \u201cplaylist\u201d.</p>';
+  markPal();
+}
+function markPal() { $$('#pal-list [data-pal]').forEach(el => el.setAttribute('aria-selected', +el.dataset.pal === S.pal.idx)); $('#pal-q')?.setAttribute('aria-activedescendant', 'pal-' + S.pal.idx); }
+function movePal(d) { const n = S.palItems.length; if (!n) return; S.pal.idx = (S.pal.idx + d + n) % n; markPal(); $('#pal-' + S.pal.idx)?.scrollIntoView({block: 'nearest'}); }
+function runPal(i) { const it = S.palItems[i]; closePalette(true); if (it) it.run(); }
+function closePalette(ran) { const ret = S.pal && S.pal.ret; $('#palette').innerHTML = ''; if (!ran && ret && ret.focus) ret.focus(); }
+
+/* ---------- action handlers ---------- */
+function openMenuAt(items, el, ev) {
+  let x, y;
+  if (ev && ev.type === 'contextmenu') { x = ev.clientX; y = ev.clientY; }
+  else { const rc = el.getBoundingClientRect(); x = rc.left; y = rc.bottom + 4; }
+  S.menu = {items, x, y}; S.pop = null; renderOverlay();
+  setTimeout(() => $('#menu button')?.focus(), 10);
+}
+const ACT = {
+  nav: (a, b) => nav(a, b), back: goBack, fwd: goFwd, palette: () => openPalette(),
+  tab: a => { S.tab = a; nav(a === 'library' ? 'lib' : a, a === 'library' ? 'releases' : undefined); if (a === 'search') setTimeout(() => $('#q2')?.focus(), 30); },
+  navLib: a => nav('lib', a), navPlaylists: () => nav('playlists'),
+  toggleSidebar: () => { if (isWide()) { const app = $('#app'); app.style.setProperty('--sidebar-w', app.style.getPropertyValue('--sidebar-w') === '0px' ? '248px' : '0px'); $('#sidebar').style.display = app.style.getPropertyValue('--sidebar-w') === '0px' ? 'none' : ''; } else { S.sidebarOpen = !S.sidebarOpen; renderChrome(); } },
+  toggleInspector: () => { S.inspector = !S.inspector; renderChrome(); renderInspector(); },
+  getRel: a => getTracks(R(a).tracks.map(t => t.id)),
+  openRel: a => nav('release', a),
+  getTrack: a => getTracks([a]), cancelTrack: a => cancelTrack(a), fixTrack: a => fixTrack(a),
+  getArtist: a => getTracks(REL.filter(r => r.artist === a).flatMap(missingOf).map(t => t.id)),
+  getSingles: a => getTracks(REL.filter(r => r.artist === a && r.kind === 'Single').flatMap(missingOf).map(t => t.id)),
+  addShow: a => { const sp = showPl(); if (sp) addToPlaylist(sp.id, a); },
+  menu: (a, b, el, ev) => openMenuAt(itemMenu(a), el, ev),
+  menuAdd: (a, b, el) => openMenuAt(playlistItems(a), el),
+  menuPick: a => { const it = S.menu.items[+a]; if (it.sub) { S.menu.items = [{label: 'Back', icon: 'chevl', run: null, back: S.menu.items}, '-', ...it.sub]; renderOverlay(); setTimeout(() => $('#menu button')?.focus(), 10); return; } if (it.back) { S.menu.items = it.back; renderOverlay(); return; } S.menu = null; renderOverlay(); it.run && it.run(); },
+  moreMenu: (a, b, el) => openMenuAt([{label: 'Commands', icon: 'search', run: () => openPalette()}, {label: 'Settings', icon: 'gear', run: () => nav('settings', 'general')}, {label: 'Activity', icon: 'download', run: () => ACT.activity()}, {label: 'Dropped Releases', icon: 'disc', run: () => { S.libFilter = 'dropped'; nav('lib', 'releases'); }}], el),
+  selMode: a => enterSelection(a), selDone: () => exitSelection(),
+  selGet: () => { getTracks(refTracks('sel')); exitSelection(); },
+  selAdd: (a, b, el) => openMenuAt(playlistItems('sel'), el),
+  selDrop: () => dropRefs(refTracks('sel'), plural(S.sel.ids.size, S.sel.kind)),
+  libFilter: a => { S.libFilter = a; exitSelection(true); render(); },
+  toggleGroup: a => { S.expanded.has(a) ? S.expanded.delete(a) : S.expanded.add(a); render(); },
+  seg: a => { S.searchSeg = a; exitSelection(true); render(); },
+  saveSearch: () => toast(`Saved \u201c${S.q}\u201d. It's in Discover now.`),
+  searchGo: () => { S.pop = null; S.searchSeg = 'top'; renderOverlay(); nav('search'); },
+  openSugg: a => { S.pop = null; renderOverlay(); openRef(a); },
+  cmd: a => { S.pop = null; renderOverlay(); $('#q').blur(); COMMANDS[+a].run(); },
+  focusSearch: () => { if (isCompact()) ACT.tab('search'); else $('#q').focus(); },
+  loadMore: () => toast("Prototype: this part isn't built. The wireframes describe it."),
+  noop: () => {},
+  newPl: () => newPlaylist(), npCreate: () => createPlaylist($('#np-name').value, $('#np-pin').checked, S.sheet.ref),
+  playPl: a => { playFrom(a); if (S.route.n !== 'show' && !isCompact()) toast(`Playing ${PL(a).name}. Controls are at the bottom and on Show.`); },
+  playPlSheet: () => { S.sheet = null; playFrom(S.showPl); nav('show'); },
+  playAgain: () => { S.show.played = []; playFrom(S.play.plId); },
+  playPause: () => { if (!S.play.tid) return; if (!S.play.paused && S.show.stage === 'live') { S.sheet = {kind: 'pauselive'}; renderOverlay(); return; } S.play.paused = !S.play.paused; if (S.play.finished) { S.play.finished = false; } render(); },
+  pauseConfirm: () => { S.sheet = null; S.play.paused = true; render(); },
+  prev: () => skip(-1), next: () => skip(1), stop: () => { stopPlayback(); toast('Stopped. The show is back at Prepare.'); },
+  check: () => openCheck(), checkFix: a => { const r = checkRows()[+a]; r.run(); if (S.sheet && S.sheet.kind === 'check') renderOverlay(); },
+  goLive: () => openGoLive(), goLiveConfirm: () => { S.show.recOpt = $('#rec-opt').checked; startGoingLive(); },
+  cancelGoing: () => { S.show.stage = 'check'; S.show.steps = null; render(); toast('Stopped before going on air. Nothing is on air.'); },
+  copyTag: () => copyText('<podcast:liveValue uri="https://api.musicindex.org/v1/liveitems/ep42-7f3a" protocol="socket.io"/>', 'Copied the live tag.'),
+  checkFeed: () => { S.setup.feed = $('#feedurl').value; const st = S.show.steps, i = st.findIndex(s => s.needsUser); st[i].s = 'ok'; st[i].at = new Date().toLocaleTimeString(); S.show.feedTagDone = true; toast('Found the live tag in your feed.'); runStep(i + 1); },
+  endShow: () => { S.sheet = {kind: 'endshow'}; renderOverlay(); setTimeout(() => $('#sheet-ok')?.focus(), 30); },
+  endConfirm: () => { S.show.stopServices = $('#stop-svc').checked; S.sheet = null; S.show.ended = Date.now(); S.show.stage = 'wrap'; stopPlayback(); toast('Off air. The stream is disconnected.'); },
+  wrapUp: () => { S.show.liveStart = S.show.liveStart || Date.now() - S.show.played.length * 200000; S.show.ended = Date.now(); S.show.stage = 'wrap'; stopPlayback(); },
+  wrapDone: () => { Object.assign(S.show, {stage: 'prepare', checked: false, played: [], steps: null, rec: false, issues: []}); render(); },
+  copyPath: () => copyText('~/Recordings/episode-42.mp3', 'Copied the path.'),
+  simFail: () => { S.show.health.publisher = 'fail'; render(); toast('Publisher stopped sending. Its row shows the fix.', null, true); },
+  restartPub: () => { S.sheet = null; restartPublisher(); }, logs: () => { S.sheet = {kind: 'logs'}; renderOverlay(); },
+  copyReport: () => copyText('Publisher report (sample)', 'Copied the report.'),
+  chooseMode: a => { S.show.mode = a; S.setup.modeChosen = true; S.show.checked = false; if (a === 'mixxx' && S.play.tid) stopPlayback(); render(); },
+  changePl: (a, b, el) => openMenuAt(S.playlists.map(p => ({label: p.name, icon: p.id === S.showPl ? 'star' : 'list', run: () => { S.showPl = p.id; S.show.checked = false; render(); }})), el),
+  wrapNoop: () => {},
+  inboxOpen: a => S._inbox[+a].open(), inboxRun: a => S._inbox[+a].run(),
+  checkNow: () => { S.log.unshift({t: clock(), text: 'Checked 24 feeds \u2014 nothing new'}); render(); toast('Checked 24 feeds. Nothing new since 14:02.'); },
+  fixAllRoutes: () => fixRoutes(Object.values(TR).filter(t => t.issue === 'route').map(t => t.id)),
+  keepTrack: a => { T(a).issue = null; render(); toast(`Keeping \u201c${T(a).title}\u201d.`); },
+  rmFromAll: a => { const prev = S.playlists.map(p => [p, [...p.tracks]]); S.playlists.forEach(p => p.tracks = p.tracks.filter(x => x !== a)); T(a).issue = null; render(); toast(`Removed \u201c${T(a).title}\u201d from every playlist.`, {label: 'Undo', run: () => { prev.forEach(([p, t]) => p.tracks = t); T(a).issue = 'removed'; render(); }}); },
+  dropTrack: a => { T(a).issue = null; dropRefs([a], `\u201c${T(a).title}\u201d`); },
+  applyAll: () => confirmSheet({title: 'Apply Updates from 3 Releases?', body: '<p class="co">Gets 1 new track and rewrites tags in 9 files. Files playing on air right now are skipped.</p>', ok: 'Apply Updates', run: () => { S.updatesApplied = true; const r = R('discoswag'); const t = {id: 'discoswag-7', rid: 'discoswag', n: 7, title: 'Encore (Live)', dur: 245, state: 'none', progress: 0, issue: null}; TR[t.id] = t; r.tracks.push(t); S.log.unshift({t: clock(), text: 'Updated 3 releases, wrote 9 files'}); getTracks([t.id]); toast('Updated 3 releases and wrote 9 files. Getting 1 new track.'); }}),
+  setTheme: a => { if (a === 'system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = a; store('theme', a); render(); },
+  setTs: a => { document.documentElement.style.setProperty('--ts', a); store('ts', +a); render(); },
+  setSkin: a => { if (a === 'mi') document.documentElement.dataset.skin = 'mi'; else delete document.documentElement.dataset.skin; store('skin', a); render(); },
+  setupToggle: a => { S.setupOpen = S.setupOpen === a ? null : a; render(); },
+  testIt: a => { const el = $('#test-' + a); if (el) { el.textContent = 'Testing\u2026'; setTimeout(() => { el.innerHTML = a === 'mi' ? `${ic('checkc')} Reached api.musicindex.org in 84 ms` : `${ic('checkc')} butt 1.42 answered \u00b7 not connected`; el.style.color = 'var(--state-ok)'; }, 700); } },
+  saveEncoder: () => { S.setup.encoder = true; S.setupOpen = null; S.show.checked = false; render(); toast('Stream encoder set up.'); },
+  saveFeed: () => { S.setup.feed = $('#feed-in').value.trim(); S.setupOpen = null; render(); toast('Saved your show\u2019s feed.'); },
+  backup: () => toast('Backed up the database to ~/.local/share/v4vmm/backups (sample).'),
+  showWelcome: () => { S.welcome = true; S.welcomeStep = 0; renderOverlay(); runWelcome(); },
+  welcomeDone: () => { S.welcome = false; store('welcomed', true); renderOverlay(); toast('Tip: press Get on any release to take it. Press ' + K('\u2318K') + ' or / for every action.'); },
+  activity: () => { S.pop = S.pop === 'activity' ? null : 'activity'; renderOverlay(); },
+  stopAll: () => { DL.queue.forEach(id => T(id).state = 'none'); DL.total -= DL.queue.length; DL.queue = []; render(); toast('Stopped the queued downloads. The ones already running will finish.'); },
+  sheetCancel: () => { S.sheet = null; renderOverlay(); },
+  sheetBg: (a, b, el, ev) => { if (ev.target === el) { S.sheet = null; renderOverlay(); } },
+  sheetOk: () => { const s = S.sheet; S.sheet = null; renderOverlay(); s.run(); },
+};
+function runWelcome() { const step = () => { if (!S.welcome) return; S.welcomeStep++; renderOverlay(); if (S.welcomeStep < 4) setTimeout(step, 450); else setTimeout(() => $('#wl-go')?.focus(), 30); }; setTimeout(step, 500); }
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const actEl = e.target.closest('[data-act]');
+  const inMenu = e.target.closest('#menu, .popover, .tb-search');
+  if (!inMenu && (S.menu || S.pop) && !(actEl && ['menu', 'menuAdd', 'selAdd', 'changePl', 'moreMenu', 'activity'].includes(actEl.dataset.act))) { S.menu = null; S.pop = null; renderOverlay(); if (!actEl) return; }
+  if (actEl) {
+    const fn = ACT[actEl.dataset.act];
+    if (actEl.dataset.act === 'sheetBg' && e.target !== actEl) { const inner = e.target.closest('[data-act]'); if (inner === actEl) return; }
+    if (fn) { e.preventDefault(); fn(actEl.dataset.a, actEl.dataset.b, actEl, e); }
+    return;
+  }
+  const selEl = e.target.closest('[data-sel]');
+  if (selEl && (S.sel.on || e.metaKey || e.ctrlKey || e.shiftKey)) { const [k, id] = selEl.dataset.sel.split(':'); if (S.sel.on && S.sel.kind !== k && !(e.metaKey || e.ctrlKey)) return; toggleSel(k, id); return; }
+  const openEl = e.target.closest('[data-open]');
+  if (openEl) openRef(openEl.dataset.open);
+});
+document.addEventListener('dblclick', e => { const el = e.target.closest('[data-dblplay]'); if (el && !S.sel.on) { const [p, t] = el.dataset.dblplay.split(':'); if (T(t).state === 'library') playFrom(p, t); } });
+document.addEventListener('contextmenu', e => { const el = e.target.closest('[data-menu]'); if (el) { e.preventDefault(); openMenuAt(itemMenu(el.dataset.menu), el, e); } });
+document.addEventListener('input', e => {
+  if (e.target.id === 'q2') { S.q = e.target.value; S.searchSeg = 'top'; $('#sres').innerHTML = searchResultsHTML(); }
+  if (e.target.id === 'pl-note') PL(e.target.dataset.pl).note = e.target.value;
+  if (e.target.id === 'scrub') { S.play.pos = +e.target.value; }
+});
+document.addEventListener('keydown', e => {
+  const typing = /INPUT|TEXTAREA/.test(document.activeElement?.tagName) && !['checkbox', 'range'].includes(document.activeElement.type);
+  const mod = e.metaKey || e.ctrlKey;
+  if (e.target.id === 'side-np') { if (e.key === 'Enter') createPlaylist(e.target.value, $('#side-np-pin').checked, S.newPl.ref); if (e.key === 'Escape') { S.newPl = false; render(); } return; }
+  if (e.target.id === 'np-name' && e.key === 'Enter') { ACT.npCreate(); return; }
+  if (e.target.id === 'rename') { if (e.key === 'Enter') { const v = e.target.value.trim(); if (v) PL(S.renaming).name = v; S.renaming = null; render(); } if (e.key === 'Escape') { S.renaming = null; render(); } return; }
+  if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); openPalette(); return; }
+  if (mod && e.key.toLowerCase() === 'n' && !e.shiftKey) { e.preventDefault(); newPlaylist(); return; }
+  if (mod && e.key === ',') { e.preventDefault(); nav('settings', 'general'); return; }
+  if (mod && e.shiftKey && e.key.toLowerCase() === 'c') { e.preventDefault(); openCheck(); return; }
+  if (mod && e.altKey && (e.key.toLowerCase() === 'i' || e.code === 'KeyI')) { e.preventDefault(); ACT.toggleInspector(); return; }
+  if (mod && e.key === 'ArrowRight' && S.play.tid) { e.preventDefault(); skip(1); return; }
+  if (mod && e.key === 'ArrowLeft' && S.play.tid) { e.preventDefault(); skip(-1); return; }
+  if (mod && e.key === '.' && S.play.tid && S.show.stage !== 'live') { e.preventDefault(); stopPlayback(); return; }
+  if (e.key === 'Escape') {
+    if ($('#palette').innerHTML) { closePalette(); return; }
+    if (S.menu || S.pop) { S.menu = null; S.pop = null; renderOverlay(); return; }
+    if (S.sheet) { S.sheet = null; renderOverlay(); return; }
+    if (S.sel.on) { exitSelection(); return; }
+    if (S.sidebarOpen) { S.sidebarOpen = false; renderChrome(); return; }
+    if (S.newPl) { S.newPl = false; render(); return; }
+  }
+  if (typing) return;
+  if (e.key === '/' && !mod) { e.preventDefault(); openPalette(); return; }
+  if (e.key === ' ' && S.play.tid && !e.target.closest('button,[role=button]')) { e.preventDefault(); ACT.playPause(); return; }
+  if (e.key === 'Enter' && e.target.matches('[data-open]')) { openRef(e.target.dataset.open); return; }
+  if (e.key === 'Enter' && e.target.matches('[data-act].inbox-item, [data-act].row')) { e.target.click(); return; }
+  if ((e.key === 'Backspace' || e.key === 'Delete') && e.target.matches('[data-menu]')) { const [k, id] = e.target.dataset.menu.split(':'); if (k === 'release' && ownedRel(R(id))) dropRefs(R(id).tracks.map(t => t.id), `\u201c${R(id).title}\u201d`); if (k === 'track' && T(id).state === 'library') dropRefs([id], `\u201c${T(id).title}\u201d`); return; }
+  if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown') && e.target.matches('[data-drag]')) { const [pid, tid] = e.target.dataset.drag.split(':'); const p = PL(pid), i = p.tracks.indexOf(tid), j = e.key === 'ArrowUp' ? i - 1 : i + 1; if (j >= 0 && j < p.tracks.length) { movePl(p, i, j); setTimeout(() => $(`[data-drag="${pid}:${tid}"]`)?.focus(), 10); } e.preventDefault(); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { const s = e.target.closest('.popover, #menu'); if (s) { const b = $$('button', s); const i = b.indexOf(document.activeElement); const n = b[(i + (e.key === 'ArrowDown' ? 1 : -1) + b.length) % b.length]; n && n.focus(); e.preventDefault(); } }
+});
+/* drag & drop: reorder within a playlist, or drop items on a sidebar playlist */
+let dragData = null;
+document.addEventListener('dragstart', e => {
+  const reorder = e.target.closest('[data-drag]'), ref = e.target.closest('[data-dragref]');
+  if (reorder) { const [p, t] = reorder.dataset.drag.split(':'); dragData = {type: 'reorder', p, t, ref: 'track:' + t}; reorder.classList.add('dragging'); }
+  else if (ref) dragData = {type: 'ref', ref: S.sel.on && S.sel.ids.has(ref.dataset.dragref.split(':')[1]) ? 'sel' : ref.dataset.dragref};
+  else return;
+  e.dataTransfer.effectAllowed = 'copyMove'; try { e.dataTransfer.setData('text/plain', dragData.ref); } catch (x) {}
+});
+document.addEventListener('dragend', () => { dragData = null; $$('.dragging,.drop-before,.drop-target').forEach(el => el.classList.remove('dragging', 'drop-before', 'drop-target')); });
+document.addEventListener('dragover', e => {
+  if (!dragData) return;
+  const pl = e.target.closest('[data-drop-pl]'), row = e.target.closest('[data-drag]');
+  $$('.drop-before,.drop-target').forEach(el => el.classList.remove('drop-before', 'drop-target'));
+  if (pl) { e.preventDefault(); pl.classList.add('drop-target'); }
+  else if (row && dragData.type === 'reorder' && row.dataset.drag.split(':')[0] === dragData.p) { e.preventDefault(); row.classList.add('drop-before'); }
+});
+document.addEventListener('drop', e => {
+  if (!dragData) return;
+  const pl = e.target.closest('[data-drop-pl]'), row = e.target.closest('[data-drag]');
+  if (pl) { e.preventDefault(); addToPlaylist(pl.dataset.dropPl, dragData.ref); }
+  else if (row && dragData.type === 'reorder') {
+    e.preventDefault(); const [pid, tid] = row.dataset.drag.split(':'); const p = PL(pid);
+    if (pid === dragData.p && tid !== dragData.t) { const from = p.tracks.indexOf(dragData.t); p.tracks.splice(from, 1); p.tracks.splice(p.tracks.indexOf(tid), 0, dragData.t); render(); }
+  }
+  dragData = null;
+});
+addEventListener('resize', () => { if (S.menu || S.pop) { S.menu = null; S.pop = null; renderOverlay(); } renderChrome(); });
+
+/* ---------- boot ---------- */
+(function boot() {
+  const th = store('theme'); if (th && th !== 'system') document.documentElement.dataset.theme = th;
+  const ts = store('ts'); if (ts) document.documentElement.style.setProperty('--ts', ts);
+  if (store('skin') === 'mi') document.documentElement.dataset.skin = 'mi';
+  renderToolbarOnce(); render();
+  if (S.welcome) runWelcome();
+})();
+</script>
